@@ -34,6 +34,14 @@ Theo yêu cầu mới của chủ dự án, agent trong repository này **chỉ 
 
 Các commit web được tạo ở lượt trước vẫn là mã tham khảo chưa deploy; không tự revert/xóa công việc đã có. Agent web có thể kế thừa riêng commit `ee1a171`, không deploy toàn nhánh LMS. Trạng thái nhận live vẫn chưa xác minh. Lượt cập nhật phân công này chỉ sửa tài liệu và ZIP bàn giao; không đổi exe, không chạy lại bộ test phần mềm vì không đổi hành vi. ZIP được kiểm tra CRC/SHA-256 sau đóng gói lại.
 
+### Tư vấn mô hình offline — 07/10/2026 (chưa thay đổi mã)
+
+- Payload góp ý hiện tại: `message`, `email` tùy chọn, `app_id`, `app_version`, `request_id` ngẫu nhiên cho một góp ý/thử lại, `consent:true`, `consent_version:feedback-v1`. Header User-Agent cũng chứa tên/phiên bản app. Không có file hóa đơn/Excel, đường dẫn máy, tên máy/tài khoản Windows, mã thiết bị hoặc log lỗi tự động. Nội dung do người dùng tự gõ vẫn có thể chứa thông tin nhạy cảm; cần nhắc tránh nhập các dữ liệu đó.
+- Website đích có thể biết địa chỉ kết nối IP và thời gian nhận qua hạ tầng mạng; không mô tả góp ý là ẩn danh tuyệt đối. IP không phải trường app tự thêm vào JSON. Phía website cần giới hạn truy cập, log cần thiết và quy trình lưu/xóa; triển khai do agent web phụ trách.
+- Khuyến nghị cho app offline: chức năng hóa đơn không cần Internet/đăng nhập; góp ý tùy chọn; xem được nội dung/nơi nhận trước khi gửi, ô đồng ý mặc định tắt, lỗi giữ draft và không tự retry/queue. Không tự gửi log/định danh máy; nếu có chẩn đoán sau này thì có lựa chọn riêng mặc định tắt và xem trước chính xác dữ liệu.
+- **Điểm cần cân nhắc, chưa sửa:** `initUpdateChecker()` vẫn tự gọi kiểm tra GitHub sau khởi động 2,5 giây nếu thiết lập đã hoàn tất. Để đạt mặc định không có kết nối nền, nên đổi sang kiểm tra cập nhật thủ công hoặc tùy chọn tự kiểm tra mặc định tắt. Chủ dự án đang hỏi tư vấn; chưa coi khuyến nghị này là yêu cầu triển khai và chưa đổi hành vi.
+- Lượt này chỉ đối chiếu mã và cập nhật tài liệu; không đổi app/website/endpoint hoặc hợp đồng API, không chạy lại test phần mềm. Bản exe v2.0.7 giữ nguyên; ZIP tài liệu được kiểm tra lại CRC/SHA-256 khi đóng gói.
+
 ### Đã hoàn thành
 
 - **v2.0.7 gửi góp ý:** app có sender tới HTTPS cố định `https://leminhtriet.com/api/app-feedback`, chỉ gọi khi người dùng tích đồng ý và bấm Gửi. Backend kiểm tra đồng ý/phiên bản consent, nội dung/email, UUID, Origin/host và thiết lập đã hoàn tất; không gửi file/hóa đơn/Excel/path/cookie hoặc khóa quản trị. Chặn redirect, giới hạn thời gian/kích thước phản hồi và chỉ báo thành công khi website xác nhận đúng UUID đã gửi. Lỗi giữ bản nháp, không tự gửi nền/thử lại; thử lại chủ động giữ UUID để API không lưu trùng. UI reset đồng ý khi mở hộp và sau thành công.
