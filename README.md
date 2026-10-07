@@ -28,6 +28,12 @@ Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng 
 
 **Quy tắc dành cho các agent:** đọc mục này và [AGENTS.md](AGENTS.md) trước khi làm việc. Sau mỗi đợt thay đổi đáng kể, cập nhật README ngay trong cùng đợt làm việc: phần đã hoàn thành, lỗi còn tồn đọng, kết quả kiểm thử và bản đóng gói. README là nơi tra cứu thực trạng hiện tại; báo cáo chi tiết không thay thế việc cập nhật README.
 
+### Phân công mới nhất — 07/10/2026
+
+Theo yêu cầu mới của chủ dự án, agent trong repository này **chỉ phụ trách app Windows**. Phần API/lưu trữ/quản trị/migration/cấu hình/deploy website được giao cho agent khác; không tiếp tục sửa website hoặc gửi thông điệp sang agent khác. Bản Windows v2.0.7 đã có sender đúng hợp đồng và giữ nguyên mã/binary đã kiểm thử. Gửi [yêu cầu bàn giao web đầy đủ](docs/WEB_AGENT_BRIEF.md) cho agent website; endpoint bắt buộc là `POST https://leminhtriet.com/api/app-feedback`, JSON thành công phải có `success:true` và `id` bằng `request_id` nhận vào.
+
+Các commit web được tạo ở lượt trước vẫn là mã tham khảo chưa deploy; không tự revert/xóa công việc đã có. Agent web có thể kế thừa riêng commit `ee1a171`, không deploy toàn nhánh LMS. Trạng thái nhận live vẫn chưa xác minh. Lượt cập nhật phân công này chỉ sửa tài liệu và ZIP bàn giao; không đổi exe, không chạy lại bộ test phần mềm vì không đổi hành vi. ZIP được kiểm tra CRC/SHA-256 sau đóng gói lại.
+
 ### Đã hoàn thành
 
 - **v2.0.7 gửi góp ý:** app có sender tới HTTPS cố định `https://leminhtriet.com/api/app-feedback`, chỉ gọi khi người dùng tích đồng ý và bấm Gửi. Backend kiểm tra đồng ý/phiên bản consent, nội dung/email, UUID, Origin/host và thiết lập đã hoàn tất; không gửi file/hóa đơn/Excel/path/cookie hoặc khóa quản trị. Chặn redirect, giới hạn thời gian/kích thước phản hồi và chỉ báo thành công khi website xác nhận đúng UUID đã gửi. Lỗi giữ bản nháp, không tự gửi nền/thử lại; thử lại chủ động giữ UUID để API không lưu trùng. UI reset đồng ý khi mở hộp và sau thành công.

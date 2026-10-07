@@ -1,5 +1,7 @@
 # Tích hợp góp ý — leminhtriet.com
 
+**Phân công mới nhất 07/10/2026:** phần Windows do agent này phụ trách; phần website do chủ dự án giao agent khác. Bản [WEB_AGENT_BRIEF.md](WEB_AGENT_BRIEF.md) là yêu cầu bàn giao tự chứa, gồm hợp đồng API bắt buộc và tiêu chí nhận. Nội dung bên dưới ghi lại mã tham khảo/tình trạng trước khi đổi phân công; không phải chỉ thị tiếp tục triển khai web trong chat Windows.
+
 Thực trạng 07/10/2026, v2.0.7: mã nguồn gửi đã có trong app. Dự án Next.js `liquid-glass-portal` đã có API, migration Supabase và quản trị; push tại nhánh `codex/app-feedback` (commit `ee1a171`) của `leminhtrietit/leminhtriet`. **Chưa chạy migration DB thật/chưa cấu hình flag/secret/chưa deploy website và chưa gửi live.**
 
 Luồng: người dùng đồng ý từng lần + bấm Gửi → Flask cục bộ → HTTPS `https://leminhtriet.com/api/app-feedback` → Supabase → `/admin/app-feedback` có đăng nhập admin. Không cần CORS cho cổng localhost hoặc SMTP. Gửi từ browser chỉ đến Flask cục bộ, endpoint website cố định do server app giữ, không cho chọn URL tùy ý.

@@ -7,3 +7,5 @@ Ngày: 07/10/2026.
 - Điều khoản phiên bản `2026-10-07.1` bổ sung góp ý tùy chọn và dữ liệu kết nối; bản cũ hỏi chấp nhận lại một lần, giữ workbook/theme/path.
 - Website `liquid-glass-portal` đã có mã nguồn API nhận, migration Supabase và trang quản trị chỉ admin `/admin/app-feedback`, trạng thái/ghi chú/phân trang. Nhánh website `codex/app-feedback`, commit `ee1a171`. **Chưa deploy/migration/secret/flag ở production**; gửi thật chưa được kiểm chứng và có thể trả lỗi tới khi website triển khai xong.
 - 26 test backend, 5 bộ UI nguồn/exe đạt; website 6 test SQL/API/service/client, TypeScript/ESLint/build Cloudflare đạt. UI gửi dùng mock, không gửi góp ý thật. Xem README và docs/FEEDBACK_SETUP.md để tiếp tục triển khai.
+
+Phân công cập nhật 07/10/2026: chỉ tiếp tục phía Windows; agent khác phụ trách website theo docs/WEB_AGENT_BRIEF.md. Lượt bàn giao này chỉ cập nhật tài liệu/ZIP, exe giữ nguyên.
