@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trích xuất hóa đơn</title>
+    <title>Trích xuất hóa đơn v2.0.9 - MinhTrietEras</title>
     <meta name="author" content="Lê Minh Triết - MinhTrietEras">
     <meta name="creator" content="Lê Minh Triết">
     <meta name="publisher" content="MinhTrietEras - https://leminhtriet.com">
     <meta name="copyright" content="Copyright © 2026 Lê Minh Triết - MinhTrietEras. All rights reserved.">
-    <meta name="application-name" content="Trích xuất hóa đơn - MinhTrietEras">
+    <meta name="application-name" content="Trích xuất hóa đơn v2.0.9 - MinhTrietEras">
     <meta name="description" content="Phần mềm trích xuất hóa đơn điện tử XML & PDF sang Excel tự động, phân tích Pivot theo nhà cung cấp và tháng. Phát triển bởi Lê Minh Triết - MinhTrietEras. Website: https://leminhtriet.com">
     <meta name="keywords" content="Trích xuất hóa đơn, hóa đơn điện tử, XML, PDF, Excel, Pivot Table, MinhTrietEras, Lê Minh Triết, leminhtriet.com, MTE-TXHD-2026-VN">
-    <meta property="og:title" content="Trích xuất hóa đơn - MinhTrietEras">
+    <meta property="og:title" content="Trích xuất hóa đơn v2.0.9 - MinhTrietEras">
     <meta property="og:site_name" content="MinhTrietEras">
     <meta property="og:url" content="https://leminhtriet.com">
     <meta property="og:description" content="Hệ thống trích xuất và quản lý hóa đơn điện tử thông minh phát triển bởi MinhTrietEras (Lê Minh Triết).">
@@ -51,10 +51,13 @@
                     <img src="/static/images/app-logo.png" alt="Logo Trích xuất hóa đơn" class="max-h-full max-w-full object-contain">
                 </div>
                 <div class="sidebar-brand-text">
-                    <h1 class="text-base font-extrabold text-slate-900 leading-tight tracking-tight">
-                        Trích xuất hóa đơn
-                    </h1>
-                    <p class="text-[11px] font-medium text-pink-500">Quản lý hóa đơn thông minh</p>
+                    <div class="flex items-center gap-1.5">
+                        <h1 class="text-base font-extrabold text-slate-900 leading-tight tracking-tight">
+                            Trích xuất hóa đơn
+                        </h1>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-pink-100 text-pink-700 border border-pink-200 font-mono">v2.0.9</span>
+                    </div>
+                    <p class="text-[11px] font-medium text-pink-500">Phát triển bởi MinhTrietEras</p>
                 </div>
             </div>
 
@@ -858,81 +861,76 @@
                 </div>
             </div>
 
-            <!-- Modal Content (Invoice Paper Body) -->
-            <div class="p-8 overflow-y-auto flex-1 bg-white text-slate-800" id="invoice-printable-area">
-                <!-- Invoice Form Header -->
-                <div class="border-b-2 border-pink-200 pb-5 mb-5">
-                    <div class="flex justify-between items-start">
-                        <div class="w-2/3 pr-4">
-                            <h2 id="modal-seller-name" class="text-base font-extrabold text-pink-900 uppercase">CÔNG TY TNHH ABC</h2>
-                            <p class="text-xs text-slate-600 mt-1.5"><strong>Mã số thuế:</strong> <span id="modal-seller-mst" class="font-bold text-slate-900 font-mono">0123456789</span></p>
-                            <p class="text-xs text-slate-600 mt-1"><strong>Địa chỉ:</strong> <span id="modal-seller-address">...</span></p>
-                            <p class="text-xs text-slate-600 mt-1"><strong>Điện thoại:</strong> <span id="modal-seller-phone">...</span></p>
-                        </div>
-                        <div class="w-1/3 text-right">
-                            <div class="border border-pink-200 rounded-2xl p-3.5 bg-pink-50/40 text-xs space-y-1">
-                                <div><strong>Mẫu số:</strong> <span id="modal-inv-form">1</span></div>
-                                <div><strong>Ký hiệu:</strong> <span id="modal-inv-series" class="font-bold text-pink-700">C26MAB</span></div>
-                                <div><strong>Số HĐ:</strong> <span id="modal-inv-no" class="font-bold text-rose-600 text-sm">348826</span></div>
-                                <div><strong>Ngày lập:</strong> <span id="modal-inv-date">2026-01-25</span></div>
-                            </div>
-                        </div>
+            <!-- Modal Content (Focused: Danh sách mặt hàng & Tiền, Tổng tiền, Tổng thuế) -->
+            <div class="p-6 md:p-8 overflow-y-auto flex-1 bg-white text-slate-800" id="invoice-printable-area">
+                <!-- Thanh tóm tắt thông tin hóa đơn ngắn gọn -->
+                <div class="flex flex-wrap items-center justify-between gap-3 p-4 bg-pink-50/50 rounded-2xl border border-pink-100 mb-6 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-500">Đơn vị bán:</span>
+                        <span id="modal-seller-name" class="font-extrabold text-pink-900">...</span>
+                        <span class="text-slate-300">•</span>
+                        <span class="text-slate-500">MST:</span>
+                        <span id="modal-seller-mst" class="font-mono font-bold text-slate-800">...</span>
                     </div>
-                    
-                    <div class="text-center mt-5">
-                        <h3 id="modal-inv-title" class="text-xl font-black bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent tracking-wider uppercase">HÓA ĐƠN GIÁ TRỊ GIA TĂNG</h3>
-                        <p id="modal-inv-taxcode-auth" class="text-xs text-slate-500 mt-1">Mã CQT: <span class="font-mono font-semibold text-slate-700">...</span></p>
+                    <div class="flex items-center gap-3">
+                        <div><span class="text-slate-500">Ký hiệu:</span> <span id="modal-inv-series" class="font-mono font-bold text-pink-700">...</span></div>
+                        <div><span class="text-slate-500">Số HĐ:</span> <span id="modal-inv-no" class="font-mono font-extrabold text-rose-600 text-sm">...</span></div>
+                        <div><span class="text-slate-500">Ngày lập:</span> <span id="modal-inv-date" class="font-medium text-slate-700">...</span></div>
                     </div>
                 </div>
 
-                <!-- Buyer Info -->
-                <div class="bg-pink-50/30 p-4 rounded-2xl border border-pink-100 mb-6 text-xs space-y-2">
-                    <p><strong>Tên đơn vị mua hàng:</strong> <span id="modal-buyer-name" class="font-bold text-slate-900 uppercase">...</span></p>
-                    <p><strong>Mã số thuế:</strong> <span id="modal-buyer-mst" class="font-bold text-slate-900 font-mono">...</span></p>
-                    <p><strong>Địa chỉ:</strong> <span id="modal-buyer-address">...</span></p>
-                    <div class="flex space-x-8 pt-1">
-                        <p><strong>Hình thức thanh toán:</strong> <span id="modal-payment-method">TM/CK</span></p>
-                        <p><strong>Đồng tiền:</strong> <span id="modal-currency">VND</span></p>
-                    </div>
+                <!-- Các trường phụ được ẩn để không gây lỗi JavaScript -->
+                <div class="hidden" aria-hidden="true">
+                    <span id="modal-seller-address"></span>
+                    <span id="modal-seller-phone"></span>
+                    <span id="modal-inv-form"></span>
+                    <span id="modal-inv-title"></span>
+                    <span id="modal-inv-taxcode-auth"></span>
+                    <span id="modal-buyer-name"></span>
+                    <span id="modal-buyer-mst"></span>
+                    <span id="modal-buyer-address"></span>
+                    <span id="modal-payment-method"></span>
+                    <span id="modal-currency"></span>
+                    <div id="modal-extra-info"></div>
                 </div>
 
-                <!-- Items Table -->
-                <table class="min-w-full border-collapse border border-pink-200 text-xs mb-6 rounded-xl overflow-hidden">
-                    <thead class="bg-pink-50 text-slate-700 font-bold uppercase text-[11px]">
-                        <tr>
-                            <th class="border border-pink-200 px-2 py-2.5 text-center w-10">STT</th>
-                            <th class="border border-pink-200 px-3 py-2.5 text-left">Tên hàng hóa, dịch vụ</th>
-                            <th class="border border-pink-200 px-2 py-2.5 text-center w-16">ĐVT</th>
-                            <th class="border border-pink-200 px-2 py-2.5 text-right w-16">Số lượng</th>
-                            <th class="border border-pink-200 px-3 py-2.5 text-right w-24">Đơn giá</th>
-                            <th class="border border-pink-200 px-3 py-2.5 text-right w-28">Thành tiền</th>
-                            <th class="border border-pink-200 px-2 py-2.5 text-center w-16">Thuế %</th>
-                            <th class="border border-pink-200 px-3 py-2.5 text-right w-24">Tiền thuế</th>
-                        </tr>
-                    </thead>
-                    <tbody id="modal-items-body">
-                        <!-- Injected via JavaScript -->
-                    </tbody>
-                </table>
+                <!-- Bảng danh sách hàng hóa & tiền -->
+                <div class="overflow-x-auto rounded-2xl border border-pink-200 mb-6 shadow-sm">
+                    <table class="min-w-full border-collapse text-xs">
+                        <thead class="bg-pink-50/80 text-slate-700 font-bold uppercase text-[11px] border-b border-pink-200">
+                            <tr>
+                                <th class="px-2.5 py-3 text-center w-10">STT</th>
+                                <th class="px-3.5 py-3 text-left">Tên hàng hóa, dịch vụ</th>
+                                <th class="px-2.5 py-3 text-center w-16">ĐVT</th>
+                                <th class="px-2.5 py-3 text-right w-16">Số lượng</th>
+                                <th class="px-3.5 py-3 text-right w-24">Đơn giá</th>
+                                <th class="px-3.5 py-3 text-right w-28">Thành tiền</th>
+                                <th class="px-2.5 py-3 text-center w-16">Thuế %</th>
+                                <th class="px-3.5 py-3 text-right w-24">Tiền thuế</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-items-body" class="divide-y divide-pink-100 bg-white">
+                            <!-- Injected via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
 
-                <div id="modal-extra-info" class="text-xs space-y-3 mb-6"></div>
-
-                <!-- Totals Section -->
-                <div class="border border-pink-200 rounded-2xl p-5 bg-gradient-to-b from-pink-50/40 to-white text-xs space-y-2 mb-6">
+                <!-- Khối tổng tiền và tổng thuế -->
+                <div class="border border-pink-200 rounded-2xl p-5 bg-gradient-to-b from-pink-50/40 to-white text-xs space-y-2.5">
                     <div class="flex justify-between">
-                        <span class="text-slate-600">Tổng cộng tiền hàng (chưa thuế):</span>
-                        <span id="modal-total-without-vat" class="font-bold text-slate-900 font-mono">0 đ</span>
+                        <span class="text-slate-600 font-medium">Tổng cộng tiền hàng (chưa thuế):</span>
+                        <span id="modal-total-without-vat" class="font-bold text-slate-900 font-mono text-sm">0 đ</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-slate-600">Tổng tiền thuế GTGT:</span>
-                        <span id="modal-total-vat" class="font-bold text-pink-700 font-mono">0 đ</span>
+                        <span class="text-slate-600 font-medium">Tổng tiền thuế GTGT:</span>
+                        <span id="modal-total-vat" class="font-bold text-pink-700 font-mono text-sm">0 đ</span>
                     </div>
-                    <div class="flex justify-between pt-2.5 border-t border-pink-200 text-sm font-extrabold">
-                        <span class="text-slate-900">TỔNG TIỀN THANH TOÁN:</span>
-                        <span id="modal-total-amount" class="text-rose-600 font-mono text-base">0 đ</span>
+                    <div class="flex justify-between pt-3 border-t border-pink-200 text-sm font-extrabold">
+                        <span class="text-slate-900 uppercase">Tổng tiền thanh toán:</span>
+                        <span id="modal-total-amount" class="text-rose-600 font-mono text-base font-black">0 đ</span>
                     </div>
                     <div class="pt-1.5 text-slate-600 italic">
-                        <strong>Số tiền viết bằng chữ:</strong> <span id="modal-total-in-words" class="text-slate-800">...</span>
+                        <strong>Số tiền viết bằng chữ:</strong> <span id="modal-total-in-words" class="text-slate-800 font-normal">...</span>
                     </div>
                 </div>
 
@@ -940,26 +938,61 @@
         </div>
     </div>
 
-    <!-- Góp ý: giao diện bản nháp, chưa cấu hình API gửi. -->
-    <div id="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="feedback-title" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between">
-                <h3 id="feedback-title" class="font-bold text-base text-slate-800">Góp ý ứng dụng</h3>
-                <button id="btn-close-feedback" type="button" aria-label="Đóng góp ý" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-600">✕</button>
+    <!-- GÓP Ý & BÁO LỖI -->
+    <div id="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="feedback-title" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-pink-200 overflow-hidden my-auto animate-fade-in">
+            <!-- Header -->
+            <div class="px-6 py-4 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                        <i class="fa-solid fa-comment-dots text-sm"></i>
+                    </div>
+                    <h3 id="feedback-title" class="font-extrabold text-sm tracking-wide">Đóng Góp Ý Kiến & Báo Lỗi</h3>
+                </div>
+                <button id="btn-close-feedback" type="button" aria-label="Đóng góp ý" class="w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
             </div>
-            <p class="text-xs text-slate-600">Nơi nhận: trang quản trị leminhtriet.com. Chỉ gửi nội dung bạn nhập, email nếu có và phiên bản ứng dụng; không tự đính kèm hóa đơn hoặc Excel. Website dùng thông tin kết nối để chống spam. Hãy tránh đưa dữ liệu nhạy cảm vào góp ý.</p>
-            <label class="block text-xs font-semibold text-slate-700" for="feedback-message">Nội dung góp ý</label>
-            <textarea id="feedback-message" maxlength="4000" rows="5" placeholder="Điều bạn muốn cải thiện hoặc lỗi gặp phải…" class="w-full border border-slate-200 rounded-xl p-3 text-sm resize-y"></textarea>
-            <label class="block text-xs font-semibold text-slate-700" for="feedback-email">Email liên hệ (không bắt buộc)</label>
-            <input id="feedback-email" type="email" maxlength="254" autocomplete="email" class="w-full border border-slate-200 rounded-xl p-3 text-sm" placeholder="Để tác giả có thể phản hồi">
-            <label class="flex gap-2 text-xs text-slate-600">
-                <input id="feedback-consent" type="checkbox" class="accent-pink-600 mt-0.5">
-                <span>Tôi cho phép ứng dụng kết nối Internet để gửi nội dung góp ý, email nếu có và phiên bản ứng dụng tới leminhtriet.com.</span>
-            </label>
-            <p id="feedback-status" role="status" class="text-xs text-slate-500">Chỉ kết nối Internet khi bạn cho phép và bấm Gửi. Nội dung cần từ 10 đến 4.000 ký tự. Bản nháp chỉ giữ trong phiên mở ứng dụng; nếu gửi lỗi bạn có thể thử lại hoặc sao chép.</p>
-            <div class="flex gap-2 justify-end">
-                <button id="btn-copy-feedback" type="button" disabled class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold disabled:opacity-50">Sao chép</button>
-                <button id="btn-send-feedback" type="button" disabled class="px-4 py-2 rounded-xl bg-pink-600 text-white text-xs font-semibold disabled:opacity-50">Gửi góp ý</button>
+
+            <!-- Body: Chỉ hiển thị form nhập liệu -->
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-800 mb-1.5" for="feedback-message">
+                        Nội dung góp ý / Báo lỗi <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea id="feedback-message" maxlength="4000" rows="5" placeholder="Chia sẻ ý kiến đóng góp, đề xuất tính năng mới hoặc mô tả sự cố bạn gặp phải..." class="w-full border border-pink-200 rounded-2xl p-3.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition resize-y"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-800 mb-1.5" for="feedback-email">
+                        Email liên hệ <span class="text-slate-400 font-normal">(không bắt buộc)</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                            <i class="fa-regular fa-envelope text-xs"></i>
+                        </span>
+                        <input id="feedback-email" type="email" maxlength="254" autocomplete="email" class="w-full border border-pink-200 rounded-2xl pl-9 pr-3.5 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition" placeholder="nhap-email@example.com để nhận phản hồi">
+                    </div>
+                </div>
+
+                <div id="feedback-status" role="status" class="text-xs empty:hidden p-3 rounded-xl bg-pink-50 text-pink-700 border border-pink-100 transition-all"></div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-slate-50/80 border-t border-pink-100 flex items-center justify-between">
+                <button id="btn-copy-feedback" type="button" class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 transition disabled:opacity-40 disabled:pointer-events-none cursor-pointer flex items-center gap-1.5">
+                    <i class="fa-regular fa-copy"></i>
+                    <span>Sao chép</span>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <button id="btn-cancel-feedback" type="button" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200/60 transition cursor-pointer">
+                        Hủy
+                    </button>
+                    <button id="btn-send-feedback" type="button" disabled class="px-5 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-extrabold shadow-md shadow-pink-500/20 transition disabled:opacity-40 disabled:shadow-none disabled:pointer-events-none cursor-pointer flex items-center gap-1.5">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                        <span>Gửi góp ý</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

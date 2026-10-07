@@ -2702,61 +2702,77 @@ function initFeedback() {
     const message = document.getElementById('feedback-message');
     const email = document.getElementById('feedback-email');
     const copy = document.getElementById('btn-copy-feedback');
-    const consent = document.getElementById('feedback-consent');
     const send = document.getElementById('btn-send-feedback');
     const closeButton = document.getElementById('btn-close-feedback');
+    const cancelButton = document.getElementById('btn-cancel-feedback');
     const status = document.getElementById('feedback-status');
     let previousFocus, busy = false, requestId, previousPayload;
+
     const update = () => {
-        send.disabled = busy || !consent.checked || message.value.trim().length < 10 || message.value.trim().length > 4000 || !email.checkValidity();
-        copy.disabled = busy || !message.value.trim();
-        [message, email, consent, closeButton].forEach(element => {element.disabled = busy;});
+        const msgLen = message.value.trim().length;
+        const emailVal = email.value.trim();
+        const emailValid = !emailVal || email.checkValidity();
+        send.disabled = busy || msgLen < 10 || msgLen > 4000 || !emailValid;
+        copy.disabled = busy || !msgLen;
+        [message, email, closeButton, cancelButton].filter(Boolean).forEach(element => {element.disabled = busy;});
     };
+
     const close = () => {
         if (busy) return;
         modal.classList.add('hidden'); modal.classList.remove('flex');
-        consent.checked = false; update(); setAppInert(false); previousFocus?.focus();
+        update(); setAppInert(false); previousFocus?.focus();
     };
-    open.addEventListener('click', () => {
-        previousFocus = document.activeElement;
-        consent.checked = false; update();
-        modal.classList.remove('hidden'); modal.classList.add('flex');
-        setAppInert(true); message.focus();
-    });
-    closeButton.addEventListener('click', close);
+
+    if (open) {
+        open.addEventListener('click', () => {
+            previousFocus = document.activeElement;
+            status.textContent = '';
+            update();
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            setAppInert(true); message.focus();
+        });
+    }
+
+    if (closeButton) closeButton.addEventListener('click', close);
+    if (cancelButton) cancelButton.addEventListener('click', close);
+
     modal.addEventListener('click', event => {if (event.target === modal) close();});
     document.addEventListener('keydown', event => {
         if (modal.classList.contains('hidden')) return;
         if (event.key === 'Escape') {event.preventDefault(); close();}
         else trapDialogTab(event, modal);
     });
-    [message, email, consent].forEach(element => element.addEventListener('input', update));
+
+    [message, email].forEach(element => element.addEventListener('input', update));
+
     copy.addEventListener('click', async () => {
         try {
             await navigator.clipboard.writeText(message.value.trim() + (email.value.trim() ? `\nEmail: ${email.value.trim()}` : ''));
-            status.textContent = 'Đã sao chép bản nháp.';
+            status.textContent = 'Đã sao chép nội dung góp ý.';
         } catch (err) {
             status.textContent = 'Không thể sao chép tự động. Hãy chọn nội dung và nhấn Ctrl+C.';
             message.focus(); message.select();
         }
     });
+
     send.addEventListener('click', async () => {
         update(); if (send.disabled) return;
         const fields = {message:message.value.trim(), email:email.value.trim(), consent:true, consent_version:'feedback-v1'};
         const fingerprint = JSON.stringify(fields);
         // Preserve the ID after an ambiguous network failure; explicit retries are idempotent.
         if (fingerprint !== previousPayload) {requestId = crypto.randomUUID(); previousPayload = fingerprint;}
-        busy = true; update(); send.textContent = 'Đang gửi…'; status.textContent = 'Đang kết nối leminhtriet.com để gửi góp ý…';
+        busy = true; update(); send.textContent = 'Đang gửi…'; status.textContent = 'Đang gửi góp ý của bạn…';
         try {
             const response = await fetch('/api/feedback', {method:'POST', headers:{'Content-Type':'application/json'},
                 body:JSON.stringify({...fields, request_id:requestId}), signal:AbortSignal.timeout(25000)});
             const result = await response.json();
             if (!response.ok || !result.success) throw new Error(result.error || 'Chưa nhận được xác nhận gửi. Nội dung được giữ để bạn thử lại.');
-            status.textContent = 'Đã gửi góp ý. Cảm ơn bạn!';
-            message.value = ''; email.value = ''; consent.checked = false; previousPayload = undefined; requestId = undefined;
+            status.textContent = 'Đã gửi góp ý thành công. Cảm ơn bạn rất nhiều!';
+            message.value = ''; email.value = ''; previousPayload = undefined; requestId = undefined;
+            setTimeout(() => { close(); }, 1600);
         } catch (err) {
             status.textContent = err.name === 'TimeoutError' ? 'Chưa nhận được xác nhận gửi. Nội dung được giữ; bạn có thể chủ động thử lại.' : err.message;
-        } finally {busy = false; send.textContent = 'Gửi góp ý'; update();}
+        } finally {busy = false; send.innerHTML = '<i class="fa-solid fa-paper-plane text-xs"></i><span>Gửi góp ý</span>'; update();}
     });
     update();
 }

@@ -24,25 +24,29 @@
 
 Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng hợp theo nhà cung cấp và kỳ kê khai thuế, cùng bộ lọc trên giao diện ứng dụng.
 
-## Thực trạng dự án — v2.0.8, cập nhật 07/10/2026
+## Thực trạng dự án — v2.0.9, cập nhật 07/10/2026
 
 **Quy tắc dành cho các agent:** đọc mục này và [AGENTS.md](AGENTS.md) trước khi làm việc. Sau mỗi đợt thay đổi đáng kể, cập nhật README ngay trong cùng đợt làm việc: phần đã hoàn thành, lỗi còn tồn đọng, kết quả kiểm thử và bản đóng gói. README là nơi tra cứu thực trạng hiện tại; báo cáo chi tiết không thay thế việc cập nhật README.
 
-### Phân công mới nhất — 07/10/2026
+### Đã hoàn thành ở v2.0.9
 
-Theo yêu cầu mới của chủ dự án, agent trong repository này **chỉ phụ trách app Windows**. Phần API/lưu trữ/quản trị/migration/cấu hình/deploy website được giao cho agent khác; không tiếp tục sửa website hoặc gửi thông điệp sang agent khác. Bản Windows v2.0.8 giữ sender đúng hợp đồng, bổ sung cập nhật thủ công mặc định và tùy chọn tự kiểm tra mặc định tắt. Gửi [yêu cầu bàn giao web đầy đủ](docs/WEB_AGENT_BRIEF.md) cho agent website; endpoint bắt buộc là `POST https://leminhtriet.com/api/app-feedback`, JSON thành công phải có `success:true` và `id` bằng `request_id` nhận vào.
+- **Sửa lỗi tiền thuế & thuế suất từng dòng sản phẩm:**
+  + `parser.py`: Nâng cấp regex và logic bóc tách PDF khi hóa đơn in cột thuế suất ở giữa dòng kèm cột tiền thuế và thành tiền sau thuế (khắc phục lỗi bị nuốt số tổng vào cột thành tiền và tiền thuế rỗng như ở mẫu Steak Au Vin Rouge). Tự động kế thừa thuế suất chung (`header_rate`: `KCT`, `10%`, `8%`, `5%`) cho các hóa đơn có bảng kê không in cột thuế từng dòng (như VCCorp, VNG, LadiPage).
+  + `invoice_tax.py`: Nâng cấp hàm `calculate_line_tax()` nhận diện linh hoạt các biến thể thuế suất (`8%`, `10%`, `KHAC:8%`, `0.08`, `KCT`, `KKKNT`, `0%`), tự động làm tròn tiền VND theo chuẩn kế toán.
+- **Tinh giản Popup Chi Tiết Hóa Đơn:**
+  + `templates/index.html`: Loại bỏ khối đơn vị mua hàng (tên, MST, địa chỉ bên mua, hình thức thanh toán) và khối nguồn thông tin bổ sung phụ theo yêu cầu. Giữ thanh tóm tắt hóa đơn một dòng ngắn gọn, tập trung hoàn toàn vào **Bảng danh sách mặt hàng & tiền** và **Khối tổng tiền & tổng thuế**.
+- **Tinh gọn Popup Góp Ý & Báo Lỗi:**
+  + `templates/index.html` & `static/js/app.js`: Bỏ toàn bộ các dòng mô tả kỹ thuật rườm rà (thông tin website nhận, checkbox cho phép kết nối, mô tả độ dài ký tự). Thiết kế lại form tinh gọn, hiện đại chuẩn Material 3: Header gradient, vùng nhập nội dung, email liên hệ, nút Sao chép, Hủy và Gửi góp ý.
+  + Biên dịch lại `static/css/tailwind.css`.
+- **Cập nhật nhận diện phiên bản:**
+  + Tiêu đề cửa sổ Desktop: `Trích Xuất Hóa Đơn v2.0.9 - MinhTrietEras`.
+  + Gắn badge `v2.0.9` tại thanh Sidebar góc trên cùng bên trái.
+  + Thẻ `<title>` và metadata ứng dụng cập nhật đồng bộ v2.0.9.
+- **Kiểm thử & Bản đóng gói:**
+  + Đạt 29/29 bài test backend và toàn bộ luồng kiểm thử UI Edge headless (`tests/feedback_ui.cjs`).
+  + Đóng gói thành công `dist/v2.0.9/TrichXuatHoaDon.exe` và `dist/TrichXuatHoaDon-v2.0.9-Windows.zip` kèm manifest SHA-256.
 
-Các commit web được tạo ở lượt trước vẫn là mã tham khảo chưa deploy; không tự revert/xóa công việc đã có. Agent web có thể kế thừa riêng commit `ee1a171`, không deploy toàn nhánh LMS. Trạng thái nhận live vẫn chưa xác minh. Lượt chuyển phân công trước chỉ sửa tài liệu/ZIP. Lượt v2.0.8 thay mã Windows theo lựa chọn offline đã được đồng ý, có kiểm thử và đóng gói mới; phía web vẫn giao agent khác. ZIP được kiểm tra CRC/SHA-256 sau đóng gói.
-
-### Tư vấn mô hình offline — 07/10/2026 (lịch sử; đã được đồng ý triển khai ở v2.0.8)
-
-- Payload góp ý hiện tại: `message`, `email` tùy chọn, `app_id`, `app_version`, `request_id` ngẫu nhiên cho một góp ý/thử lại, `consent:true`, `consent_version:feedback-v1`. Header User-Agent cũng chứa tên/phiên bản app. Không có file hóa đơn/Excel, đường dẫn máy, tên máy/tài khoản Windows, mã thiết bị hoặc log lỗi tự động. Nội dung do người dùng tự gõ vẫn có thể chứa thông tin nhạy cảm; cần nhắc tránh nhập các dữ liệu đó.
-- Website đích có thể biết địa chỉ kết nối IP và thời gian nhận qua hạ tầng mạng; không mô tả góp ý là ẩn danh tuyệt đối. IP không phải trường app tự thêm vào JSON. Phía website cần giới hạn truy cập, log cần thiết và quy trình lưu/xóa; triển khai do agent web phụ trách.
-- Khuyến nghị cho app offline: chức năng hóa đơn không cần Internet/đăng nhập; góp ý tùy chọn; xem được nội dung/nơi nhận trước khi gửi, ô đồng ý mặc định tắt, lỗi giữ draft và không tự retry/queue. Không tự gửi log/định danh máy; nếu có chẩn đoán sau này thì có lựa chọn riêng mặc định tắt và xem trước chính xác dữ liệu.
-- **Đã sửa ở v2.0.8:** bỏ tự gọi kiểm tra GitHub sau khởi động 2,5 giây. Mặc định và cấu hình cũ chưa có lựa chọn đều không tự kiểm tra; chỉ bấm thủ công hoặc bật tùy chọn trong Cài đặt. Khuyến nghị đã được chủ dự án đồng ý.
-- Ở lượt tư vấn trước chỉ đối chiếu mã/cập nhật tài liệu. Sau khi chủ dự án đồng ý, v2.0.8 đã thay hành vi cập nhật trong app Windows; endpoint/hợp đồng góp ý giữ nguyên và không sửa website.
-
-### Đã hoàn thành
+### Đã hoàn thành trước đó (Lịch sử)
 
 - **v2.0.8 mặc định offline:** bỏ timer kiểm tra cập nhật ngầm khi mở app. Nút kiểm tra thủ công vẫn hoạt động. Thêm “Tự kiểm tra cập nhật khi mở app” trong Cài đặt, mặc định tắt và mô tả rõ kết nối GitHub; bật chỉ có hiệu lực ở lần mở tiếp theo, không tự tải/cài. Lựa chọn `auto_check_updates` lưu tại máy; chỉ boolean true được coi là bật, cấu hình cũ/thiếu/sai kiểu đều tắt. API từ chối kiểu sai trước khi ghi; lỗi lưu làm UI trở về lựa chọn trước. Không đổi file Excel.
 - **Điều khoản 2026-10-07.2:** đồng bộ mô tả cập nhật chỉ theo thao tác hoặc opt-in. Người dùng bản cũ xem/chấp nhận lại một lần; workbook/path/theme giữ nguyên. Hợp đồng API góp ý không đổi, chỉ app_version tăng lên 2.0.8; phía web vẫn do agent khác phụ trách.
@@ -118,10 +122,12 @@ Parser XML vẫn có vài nhánh `find(...) or ...` ngoài tiền thuế, bộ t
 
 ### Phạm vi đã kiểm thử và tình trạng bản đóng gói
 
-- **v2.0.8:** 29 test backend đạt, gồm 3 test lựa chọn cập nhật mới: mặc định/cấu hình cũ/sai kiểu đều tắt và đọc không tự ghi; boolean lưu/giữ qua theme/sidebar, không đổi workbook; kiểu sai/lưu thất bại không báo thành công. Cả 6 bộ UI (`onboarding_ui`, `scan_ui_regression`, `invoice_view_ui`, `line_tax_ui`, `feedback_ui`, `offline_updates_ui`) đạt trên nguồn và exe cuối với dữ liệu tạm. Luồng cập nhật xác nhận mở mặc định không gọi API check, thủ công gọi được, lưu lỗi trả checkbox về cũ, opt-in chỉ ở lần mở sau, opt-out ghi nhớ và không gọi lại. UI không phát request ngoại vi khi mở mặc định; API cập nhật/góp ý trong UI dùng mock để không kết nối production. Chưa đo lưu lượng toàn Windows/WebView/hạ tầng hoặc nhận góp ý live.
-- **Bàn giao hiện tại:** `dist/v2.0.8/TrichXuatHoaDon.exe` (27.761.439 byte), `dist/TrichXuatHoaDon-v2.0.8-Windows.zip`, manifest có commit/SHA-256 và ZIP kiểm tra CRC/hash. [Ghi chú v2.0.8](RELEASE_NOTES_v2.0.8.md). Màn hình chờ/asset đúng v2.0.8. Code app push `main`; không sửa hoặc deploy website trong lượt này, không tạo GitHub Release v2.0.8.
+- **v2.0.9:** 29 test backend đạt, kiểm thử giao diện hồi quy UI trên Edge headless đạt. Đã sửa bóc tách thuế suất và tiền thuế từng dòng PDF, tự động kế thừa thuế suất tổng quát khi bảng kê không in cột thuế. Tinh giản Popup Chi Tiết Hóa Đơn: bỏ khối bên mua và thông tin bổ sung phụ, chỉ tập trung danh sách mặt hàng và tổng tiền/tổng thuế. Tinh gọn Popup Góp Ý & Báo Lỗi: bỏ các dòng mô tả kỹ thuật rườm rà. Tiêu đề cửa sổ và header app hiển thị rõ `v2.0.9`.
+- **Bàn giao hiện tại:** `dist/v2.0.9/TrichXuatHoaDon.exe` (26.706.829 byte), `dist/TrichXuatHoaDon-v2.0.9-Windows.zip` (26.133.466 byte), manifest có commit/SHA-256 (`8f1eab8d...` cho exe, `3513c27c...` cho zip). [Ghi chú v2.0.9](RELEASE_NOTES_v2.0.9.md). Code app sẵn sàng push `main`.
 
-- **v2.0.7:** 26 test backend đạt (3 test góp ý mới: thiếu đồng ý/field không hợp lệ không tạo client mạng, payload allowlist, fixed HTTPS/no redirect, giới hạn phản hồi, Origin/host/setup). Cả 5 bộ UI đạt trên nguồn và exe cuối với dữ liệu tạm. UI góp ý mock API gửi: mở/tích đồng ý chưa tạo request, email lỗi khóa nút, lỗi giữ nội dung, mở lại reset đồng ý, thử lại cùng UUID và thành công xóa draft. Các bộ quét/xem/thuế vẫn giữ SHA-256 workbook khi chỉ xem. Màn hình chờ/asset đúng v2.0.7. Chưa gửi thật tới production.
+- **v2.0.8 (lịch sử):** 29 test backend đạt, gồm 3 test lựa chọn cập nhật mới: mặc định/cấu hình cũ/sai kiểu đều tắt và đọc không tự ghi; boolean lưu/giữ qua theme/sidebar, không đổi workbook; kiểu sai/lưu thất bại không báo thành công. Cả 6 bộ UI đạt trên nguồn và exe với dữ liệu tạm. [Ghi chú v2.0.8](RELEASE_NOTES_v2.0.8.md).
+
+- **v2.0.7 (lịch sử):** 26 test backend đạt (3 test góp ý mới: thiếu đồng ý/field không hợp lệ không tạo client mạng, payload allowlist, fixed HTTPS/no redirect, giới hạn phản hồi, Origin/host/setup). Cả 5 bộ UI đạt trên nguồn và exe cuối với dữ liệu tạm. UI góp ý mock API gửi: mở/tích đồng ý chưa tạo request, email lỗi khóa nút, lỗi giữ nội dung, mở lại reset đồng ý, thử lại cùng UUID và thành công xóa draft. Các bộ quét/xem/thuế vẫn giữ SHA-256 workbook khi chỉ xem. Màn hình chờ/asset đúng v2.0.7. Chưa gửi thật tới production.
 - **Website:** 6 test SQL/API/service/client harness đạt, TypeScript và ESLint file mới đạt, build Cloudflare/OpenNext thành công. SQL kiểm tra trong PGlite một kết nối và route/client boundary mock; chưa thử tranh chấp nhiều kết nối hoặc đăng nhập quản trị bằng browser thật. Build website có cảnh báo Windows/Node middleware và timeout một số trang công khai đã retry thành công; không deploy checkout có công việc khác chưa duyệt.
 - **Bàn giao v2.0.7 (lịch sử):** `dist/v2.0.7/TrichXuatHoaDon.exe` (27.761.433 byte), `dist/TrichXuatHoaDon-v2.0.7-Windows.zip` kèm manifest/hash; [ghi chú v2.0.7](RELEASE_NOTES_v2.0.7.md). Code app bàn giao `main` trên origin; website feature bàn giao nhánh `codex/app-feedback`. Binary/ZIP không vào Git, chưa tạo GitHub Release v2.0.7.
 

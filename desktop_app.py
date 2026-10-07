@@ -51,9 +51,10 @@ def main():
     import webview
 
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    from config import APP_VERSION
     server_state = {'server': None, 'closed': False, 'lock': threading.Lock()}
     window = webview.create_window(
-        title='Trích xuất hóa đơn - MinhTrietEras',
+        title=f'Trích Xuất Hóa Đơn v{APP_VERSION} - MinhTrietEras',
         html=startup_html(), width=1320, height=860,
         min_size=(1024, 680), resizable=True, text_select=True,
         confirm_close=False, background_color='#f6f7fc',

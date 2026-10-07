@@ -235,6 +235,20 @@ def parse_xml_invoice(xml_source, filename=''):
                 'tien_thue': safe_float(safe_text(lt_suat, 'TThue'))
             })
 
+    if items and danh_sach_thue_suat:
+        # Nếu hóa đơn chỉ có 1 mức thuế suất chung ở phần thanh toán
+        if len(danh_sach_thue_suat) == 1:
+            global_rate = danh_sach_thue_suat[0]['thue_suat']
+            for it in items:
+                if not it.get('thue_suat'):
+                    it['thue_suat'] = global_rate
+                if it.get('tien_thue') is None:
+                    it['tien_thue'] = calculate_line_tax(it.get('thanh_tien'), it['thue_suat'])
+                    it['tong_tien_dong'] = it['thanh_tien'] + it['tien_thue'] if it['tien_thue'] is not None else None
+        elif len(items) == 1 and items[0].get('tien_thue') is None and tong_tien_thue > 0:
+            items[0]['tien_thue'] = tong_tien_thue
+            items[0]['tong_tien_dong'] = items[0]['thanh_tien'] + tong_tien_thue
+
     if tong_tien_thanh_toan == 0 and items:
         tong_tien_chua_thue = sum(it['thanh_tien'] for it in items)
         tong_tien_thue = sum(it['tien_thue'] or 0 for it in items)
@@ -577,19 +591,106 @@ def parse_pdf_invoice(pdf_source, filename=''):
         if tong_tien_thanh_toan == 0 and tong_tien_chua_thue > 0:
             tong_tien_thanh_toan = tong_tien_chua_thue + tong_tien_thue
 
-        rates = re.findall(r'(?:Thuế\s*suất(?:\s*(?:GTGT|VAT))?|VAT\s*rate|Tax\s*rate)\s*:?\s*(\d+(?:[.,]\d+)?)\s*%', full_text_repaired, re.IGNORECASE)
-        unique_rates = set(rate.replace(',', '.') for rate in rates)
-        header_rate = next(iter(unique_rates)) + '%' if len(unique_rates) == 1 else ''
+        rates = re.findall(r'(?:Thuế\s*suất(?:\s*(?:GTGT|VAT))?|VAT\s*rate|Tax\s*rate)\s*:?\s*(\d+(?:[.,]\d+)?\s*%|KCT|KKKNT|kh\w*chiu\w*thue)', full_text_repaired, re.IGNORECASE)
+        unique_rates = set(rate.replace(',', '.').upper() for rate in rates)
+        header_rate = next(iter(unique_rates)) if len(unique_rates) == 1 else ''
+        if header_rate and not header_rate.endswith('%') and header_rate not in ('KCT', 'KKKNT'):
+            header_rate += '%'
 
         # 9. Bóc tách mặt hàng (Line items)
         items = []
         seen_items = set()
         for l in lines:
-            m_item = re.search(r'^(\d{1,2})\s+([^\d\n\r]{2,80})\s+(.+)$', l)
-            if m_item:
-                stt = int(m_item.group(1))
-                raw_name = m_item.group(2).strip()
-                rest = m_item.group(3).strip()
+            m_stt = re.match(r'^(\d{1,3})\s+(.+)$', l)
+            if not m_stt:
+                continue
+            stt = int(m_stt.group(1))
+            content = m_stt.group(2).strip()
+            if re.match(r'^(?:Tên\s*hàng|STT|Description|\d+\s*=\s*\d+|Cộng|Tổng|Đơn\s*vị)', content, re.IGNORECASE):
+                continue
+
+            # Kiểm tra xem dòng có chứa cột thuế suất hay không (vd: 8%, 10%, KCT)
+            m_tax = re.search(r'(?:^|\s)(\d+(?:[.,]\d+)?\s*%|KCT|KKKNT)(?:\s|$)', content, re.IGNORECASE)
+            if m_tax:
+                line_rate = m_tax.group(1).upper()
+                if not line_rate.endswith('%') and line_rate not in ('KCT', 'KKKNT'):
+                    line_rate += '%'
+                before = content[:m_tax.start(1)].strip()
+                after = content[m_tax.end(1):].strip()
+
+                after_nums_raw = re.findall(r'([0-9]{1,3}(?:\.[0-9]{3})+(?:,[0-9]+)?|[0-9]+(?:,[0-9]+)?)', after)
+                after_floats = [safe_float(n) for n in after_nums_raw]
+
+                before_nums_raw = re.findall(r'([0-9]{1,3}(?:\.[0-9]{3})+(?:,[0-9]+)?|[0-9]+(?:,[0-9]+)?)', before)
+                before_floats = [safe_float(n) for n in before_nums_raw]
+
+                # Tách tên hàng và ĐVT từ before
+                m_nums_start = re.search(r'(?:\s|^)([0-9]{1,3}(?:\.[0-9]{3})+(?:,[0-9]+)?|[0-9]+(?:,[0-9]+)?)(?:\s|$)', before)
+                text_part = before[:m_nums_start.start()].strip() if m_nums_start else before
+                words = text_part.split()
+                if len(words) > 1 and len(words[-1]) <= 15:
+                    dvt = words[-1]
+                    ten_hang = ' '.join(words[:-1])
+                else:
+                    dvt = 'Gói'
+                    ten_hang = text_part
+
+                item_key = f"{stt}_{ten_hang}"
+                if item_key in seen_items:
+                    continue
+                seen_items.add(item_key)
+
+                so_luong = 1.0; don_gia = 0.0; thanh_tien = 0.0
+                if len(before_floats) >= 4:
+                    so_luong = before_floats[0]
+                    don_gia = before_floats[1]
+                    thanh_tien = before_floats[2]
+                elif len(before_floats) == 3:
+                    so_luong = before_floats[0]
+                    don_gia = before_floats[1]
+                    thanh_tien = before_floats[2]
+                elif len(before_floats) == 2:
+                    so_luong = before_floats[0]
+                    thanh_tien = before_floats[1]
+                    don_gia = thanh_tien / so_luong if so_luong else thanh_tien
+                elif len(before_floats) == 1:
+                    thanh_tien = before_floats[0]
+                    don_gia = thanh_tien
+
+                tien_thue = None; tong_dong = None
+                if len(after_floats) >= 2:
+                    tien_thue = after_floats[0]
+                    tong_dong = after_floats[1]
+                elif len(after_floats) == 1:
+                    if line_rate in ('KCT', 'KKKNT', '0%'):
+                        tien_thue = 0.0
+                        tong_dong = after_floats[0]
+                    else:
+                        tien_thue = after_floats[0]
+                        tong_dong = thanh_tien + tien_thue
+                else:
+                    tien_thue = calculate_line_tax(thanh_tien, line_rate)
+                    tong_dong = thanh_tien + tien_thue if tien_thue is not None else None
+
+                items.append({
+                    'stt': str(stt),
+                    'tinh_chat': '1',
+                    'ma_hang': '',
+                    'ten_hang': ten_hang,
+                    'dvt': dvt,
+                    'so_luong': so_luong,
+                    'don_gia': don_gia,
+                    'thanh_tien': thanh_tien,
+                    'thue_suat': line_rate,
+                    'tien_thue': tien_thue,
+                    'tong_tien_dong': tong_dong
+                })
+            else:
+                m_item = re.search(r'^([^\d\n\r]{2,80})\s+(.+)$', content)
+                if not m_item:
+                    continue
+                raw_name = m_item.group(1).strip()
+                rest = m_item.group(2).strip()
                 if re.match(r'^(?:Tên\s*hàng|STT|Description|\d+\s*=\s*\d+)', raw_name, re.IGNORECASE):
                     continue
                 item_key = f"{stt}_{raw_name}"
@@ -597,14 +698,10 @@ def parse_pdf_invoice(pdf_source, filename=''):
                     continue
                 seen_items.add(item_key)
 
-                line_rate_match = re.search(r'(\d+(?:[.,]\d+)?)\s*%\s*$', rest)
-                line_rate = line_rate_match.group(1) + '%' if line_rate_match else ''
-                if line_rate_match:
-                    rest = rest[:line_rate_match.start()].rstrip()
                 nums = re.findall(r'([0-9]{1,3}(?:\.[0-9]{3})+(?:,[0-9]+)?|\d+)', rest)
                 m_dvt = re.match(r'^([A-Za-zÀ-ỹ]+)\s+', rest)
                 dvt = m_dvt.group(1) if m_dvt else ''
-                
+
                 valid_floats = []
                 for n_str in nums:
                     clean_n = n_str.replace('.', '').replace(',', '.')
@@ -612,10 +709,8 @@ def parse_pdf_invoice(pdf_source, filename=''):
                         valid_floats.append(float(clean_n))
                     except ValueError:
                         pass
-                        
-                so_luong = 1.0
-                don_gia = 0.0
-                thanh_tien = 0.0
+
+                so_luong = 1.0; don_gia = 0.0; thanh_tien = 0.0
                 if valid_floats:
                     thanh_tien = valid_floats[-1]
                     if len(valid_floats) >= 3:
@@ -628,7 +723,8 @@ def parse_pdf_invoice(pdf_source, filename=''):
                         don_gia = valid_floats[0]
                         thanh_tien = valid_floats[0]
 
-                line_tax = calculate_line_tax(thanh_tien, line_rate)
+                eff_rate = header_rate or ''
+                line_tax = calculate_line_tax(thanh_tien, eff_rate) if eff_rate else None
                 items.append({
                     'stt': str(stt),
                     'tinh_chat': '1',
@@ -638,20 +734,24 @@ def parse_pdf_invoice(pdf_source, filename=''):
                     'so_luong': so_luong,
                     'don_gia': don_gia,
                     'thanh_tien': thanh_tien,
-                    'thue_suat': line_rate,
+                    'thue_suat': eff_rate,
                     'tien_thue': line_tax,
                     'tong_tien_dong': thanh_tien + line_tax if line_tax is not None else None
                 })
 
-        # Chỉ dùng thuế suất chung khi tiền hàng và tổng thuế đối chiếu khớp.
-        if items and header_rate and m_thue is not None:
-            taxes = [calculate_line_tax(item['thanh_tien'], item['thue_suat'] or header_rate) for item in items]
-            if all(tax is not None for tax in taxes) and abs(sum(taxes) - tong_tien_thue) < 0.011 and abs(sum(item['thanh_tien'] for item in items) - tong_tien_chua_thue) < 0.011:
-                for item, tax in zip(items, taxes):
-                    if item['tien_thue'] is None:
-                        item.update(thue_suat=header_rate, tien_thue=tax, tong_tien_dong=item['thanh_tien'] + tax)
-        # Một dòng khớp toàn bộ tiền hàng thì tiền thuế tổng chính là thuế dòng đó.
-        if len(items) == 1 and items[0]['tien_thue'] is None and m_thue is not None and abs(items[0]['thanh_tien'] - tong_tien_chua_thue) < 0.011:
+        # Bổ sung/đối chiếu thuế suất chung cho các dòng chưa có thuế
+        if items and header_rate:
+            for item in items:
+                if not item['thue_suat']:
+                    item['thue_suat'] = header_rate
+                if item['tien_thue'] is None:
+                    calc = calculate_line_tax(item['thanh_tien'], item['thue_suat'])
+                    if calc is not None:
+                        item['tien_thue'] = calc
+                        item['tong_tien_dong'] = item['thanh_tien'] + calc
+
+        # Một dòng khớp toàn bộ tiền hàng thì tiền thuế tổng chính là thuế dòng đó
+        if len(items) == 1 and items[0]['tien_thue'] is None and tong_tien_thue > 0:
             items[0].update(tien_thue=tong_tien_thue, tong_tien_dong=items[0]['thanh_tien'] + tong_tien_thue)
 
         if not items and tong_tien_thanh_toan > 0:

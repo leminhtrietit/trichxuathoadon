@@ -37,3 +37,7 @@ dist/
 *.spec
 *.exe
 *.zip
+
+# Node
+node_modules/
+package-lock.json

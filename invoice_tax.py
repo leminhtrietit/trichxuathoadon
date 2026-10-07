@@ -10,17 +10,36 @@ def normalize_tax_label(value):
 
 
 def calculate_line_tax(amount, rate):
-    text = str(rate if rate is not None else '').strip()
-    if normalize_tax_label(text) in ('kct', 'kkknt', 'khongchiuthue', 'khongkekhaitinhnopthue'):
-        return 0.0
-    match = re.fullmatch(r'(\d+(?:[.,]\d+)?)\s*%?', text)
-    if not match or amount is None:
+    if amount is None:
         return None
-    try:
+    text = str(rate if rate is not None else '').strip()
+    norm = normalize_tax_label(text)
+    if norm in ('kct', 'kkknt', 'khongchiuthue', 'khongkekhaitinhnopthue', '0', '0%'):
+        return 0.0
+
+    # Tìm kiếm mẫu phần trăm: 8%, 10%, KHAC:8%, Khác: 8%
+    match = re.search(r'(\d+(?:[.,]\d+)?)\s*%', text)
+    if not match:
+        match = re.search(r'(\d+(?:[.,]\d+)?)', text)
+        if not match:
+            return None
+        raw_val = float(match.group(1).replace(',', '.'))
+        if 0 < raw_val <= 0.2:
+            percentage = Decimal(str(raw_val * 100))
+        else:
+            percentage = Decimal(str(raw_val))
+    else:
         percentage = Decimal(match.group(1).replace(',', '.'))
+
+    try:
         base = Decimal(str(amount))
         if not base.is_finite() or not 0 <= percentage <= 100:
             return None
-        return float((base * percentage / Decimal(100)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+        # Với số tiền nguyên (thường gặp trong hóa đơn VND), làm tròn thuế đến hàng đơn vị
+        if base == base.to_integral():
+            raw_tax = (base * percentage / Decimal(100)).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+        else:
+            raw_tax = (base * percentage / Decimal(100)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        return float(raw_tax)
     except (InvalidOperation, ValueError, TypeError):
         return None
