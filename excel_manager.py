@@ -1023,3 +1023,55 @@ def clear_excel_data(filepath):
     except Exception as e:
         return {'success': False, 'error': f'Lỗi khi xóa dữ liệu file Excel: {str(e)}'}
 
+
+
+def read_excel_invoice_details(filepath, stt=None):
+    """Chỉ đọc summary + dòng hàng hóa; không khởi tạo hoặc lưu workbook."""
+    summary = read_excel_summary(filepath)
+    if summary.get('error'):
+        return {'success': False, 'error': summary['error']}
+    rows = summary.get('rows', [])
+    if stt is not None:
+        rows = [r for r in rows if str(r['stt']) == str(stt)]
+        if not rows:
+            return {'success': False, 'error': 'Không tìm thấy hóa đơn trong Excel'}
+    invoices = []
+    for r in rows:
+        invoices.append({
+            'invoice_key': r['invoice_key'], 'already_in_excel': True,
+            'filename': r['filename'], 'file_type': r['file_type'],
+            'supplier_folder': r['supplier_folder'], 'thoi_gian_nhap': r['thoi_gian_nhap'],
+            'source': 'excel',
+            'thong_tin_chung': {k: r[k] for k in ('mau_so', 'ky_hieu', 'so_hd', 'ngay_lap', 'ma_cqt', 'hinh_thuc_tt')},
+            'nguoi_ban': {'ten': r['nb_ten'], 'mst': r['nb_mst'], 'dia_chi': r['nb_dchi']},
+            'nguoi_mua': {'ten': r['nm_ten'], 'mst': r['nm_mst'], 'dia_chi': r['nm_dchi']},
+            'thanh_toan': {'tong_tien_chua_thue': r['tien_chua_thue'], 'tong_tien_thue': r['tien_thue'],
+                          'tong_tien_thanh_toan': r['tong_tien'], 'tong_tien_chu': r['tien_chu']},
+            'hang_hoa': []})
+    if not invoices:
+        return {'success': True, 'invoices': []}
+    by_key = {inv['invoice_key']: inv for inv in invoices}
+    wb = None
+    try:
+        wb = openpyxl.load_workbook(filepath, read_only=True, data_only=True)
+        if 'ChiTietHangHoa' in wb.sheetnames:
+            ws = wb['ChiTietHangHoa']
+            cols = get_col_map(ws)
+            ws.reset_dimensions()
+            names = [h[0] for h in DETAIL_HEADERS]
+            fields = ('stt', 'tinh_chat', 'ma_hang', 'ten_hang', 'dvt', 'so_luong', 'don_gia',
+                      'thanh_tien', 'thue_suat', 'tien_thue', 'tong_tien_dong')
+            for values in ws.iter_rows(min_row=2, max_col=max(cols.values(), default=19), values_only=True):
+                def value(name):
+                    index = cols.get(name, names.index(name) + 1) - 1
+                    return values[index] if index < len(values) else None
+                key = '_'.join(str(value(name) or '').strip() for name in ('Ký hiệu HĐ', 'Số HĐ', 'MST Người bán'))
+                if key in by_key:
+                    item = dict(zip(fields, (value(name) for name in names[7:18])))
+                    by_key[key]['hang_hoa'].append(item)
+        return {'success': True, 'invoices': invoices}
+    except Exception as exc:
+        return {'success': False, 'error': f'Không thể đọc chi tiết Excel: {exc}'}
+    finally:
+        if wb is not None:
+            wb.close()

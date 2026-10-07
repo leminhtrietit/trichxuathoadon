@@ -25,7 +25,7 @@ SAMPLE_XML_PATH = r"C:\Users\minht\Downloads\348826-T01-2026.xml"
 
 # Thông tin Tác giả & Tracking Bản Quyền
 APP_NAME = "Trích xuất hóa đơn"
-APP_VERSION = "2.0.2"
+APP_VERSION = "2.0.3"
 AUTHOR = "Lê Minh Triết"
 ORGANIZATION = "MinhTrietEras"
 WEBSITE = "https://leminhtriet.com"

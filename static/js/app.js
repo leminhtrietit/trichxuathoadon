@@ -9,6 +9,7 @@ const state = {
     lastExtractionData: null,
     selectedUploadFiles: [],
     excelRows: [],
+    savedInvoices: [],
     pivotBySupplier: [],
     pivotByMonth: [],
     excelStats: {},
@@ -128,6 +129,8 @@ function initTabs() {
 
             if (targetId === 'tab-excel') {
                 loadExcelData();
+            } else if (targetId === 'tab-items') {
+                loadSavedInvoiceDetails();
             } else if (targetId === 'tab-pivot') {
                 populatePivotFilters();
                 renderPivotTab();
@@ -1017,21 +1020,19 @@ function updateBadges() {
     const badgeUpload = document.getElementById('badge-upload-count');
     const badgeItems = document.getElementById('badge-items-count');
     const previewContainer = document.getElementById('preview-container');
-    const totalItems = state.parsedInvoices.reduce((sum, inv) => sum + (inv.hang_hoa ? inv.hang_hoa.length : 0), 0);
+    const totalItems = getDisplayInvoices().reduce((sum, inv) => sum + (inv.hang_hoa ? inv.hang_hoa.length : 0), 0);
     document.getElementById('items-table-count').textContent = `${totalItems} mặt hàng`;
 
     if (previewCount > 0) {
         badgeUpload.textContent = previewCount;
         badgeUpload.classList.remove('hidden');
         previewContainer.classList.remove('hidden');
-
-        badgeItems.textContent = totalItems;
-        badgeItems.classList.remove('hidden');
     } else {
         badgeUpload.classList.add('hidden');
-        badgeItems.classList.add('hidden');
         previewContainer.classList.add('hidden');
     }
+    badgeItems.textContent = totalItems;
+    badgeItems.classList.toggle('hidden', totalItems === 0);
 }
 
 // Hiển thị danh sách hóa đơn trong bảng Preview
@@ -1108,14 +1109,47 @@ function renderPreviewTable() {
 }
 
 // Hiển thị chi tiết hàng hóa ở Tab 2
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+
+function getDisplayInvoices() {
+    const invoices = new Map(state.savedInvoices.map(inv => [inv.invoice_key, inv]));
+    state.parsedInvoices.forEach(inv => invoices.set(inv.invoice_key, inv));
+    return [...invoices.values()];
+}
+
+async function loadSavedInvoiceDetails() {
+    try {
+        const res = await fetch('/api/invoice-details');
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Không thể đọc chi tiết hóa đơn');
+        state.savedInvoices = data.invoices;
+        renderItemsTable();
+        updateBadges();
+    } catch (err) {
+        showToast(escapeHtml(err.message), 'error');
+    }
+}
+
+async function openSavedInvoice(row) {
+    try {
+        const res = await fetch('/api/invoice-details?stt=' + encodeURIComponent(row.stt));
+        const data = await res.json();
+        if (!res.ok || !data.success || !data.invoices.length) throw new Error(data.error || 'Không tìm thấy hóa đơn');
+        showInvoiceModal(data.invoices[0]);
+    } catch (err) {
+        showToast(escapeHtml(err.message), 'error');
+    }
+}
+
 function renderItemsTable() {
     const tbody = document.getElementById('items-table-body');
     tbody.innerHTML = '';
 
     let rowIdx = 1;
-    state.parsedInvoices.forEach(inv => {
+    getDisplayInvoices().forEach(inv => {
         const tt = inv.thong_tin_chung;
-        const nb = inv.nguoi_ban;
 
         (inv.hang_hoa || []).forEach(it => {
             const tr = document.createElement('tr');
@@ -1123,16 +1157,14 @@ function renderItemsTable() {
 
             tr.innerHTML = `
                 <td class="px-4 py-3 text-center text-slate-400 font-medium">${rowIdx++}</td>
-                <td class="px-4 py-3 font-bold text-rose-600 font-mono">${tt.so_hd || '---'}</td>
-                <td class="px-4 py-3 font-semibold text-pink-700 font-mono">${tt.ky_hieu || '---'}</td>
-                <td class="px-5 py-3 text-slate-700 max-w-[170px] truncate" title="${nb.ten}">${nb.ten || '---'}</td>
-                <td class="px-4 py-3 font-mono text-slate-500">${it.ma_hang || '---'}</td>
-                <td class="px-5 py-3 font-bold text-slate-900">${it.ten_hang || '---'}</td>
-                <td class="px-4 py-3 text-center text-slate-600">${it.dvt || '---'}</td>
+                <td class="px-4 py-3 font-bold text-rose-600 font-mono">${escapeHtml(tt.so_hd || '---')}</td>
+                <td class="px-4 py-3 font-semibold text-pink-700 font-mono">${escapeHtml(tt.ky_hieu || '---')}</td>
+                <td class="px-5 py-3 font-bold text-slate-900">${escapeHtml(it.ten_hang || '---')}</td>
+                <td class="px-4 py-3 text-center text-slate-600">${escapeHtml(it.dvt || '---')}</td>
                 <td class="px-4 py-3 text-right font-mono font-medium">${formatNumber(it.so_luong)}</td>
                 <td class="px-4 py-3 text-right font-mono text-slate-600">${formatCurrency(it.don_gia)}</td>
                 <td class="px-4 py-3 text-right font-mono text-slate-900 font-semibold">${formatCurrency(it.thanh_tien)}</td>
-                <td class="px-4 py-3 text-center font-mono font-bold text-pink-600">${it.thue_suat || '---'}</td>
+                <td class="px-4 py-3 text-center font-mono font-bold text-pink-600">${escapeHtml(it.thue_suat || '---')}</td>
                 <td class="px-4 py-3 text-right font-mono text-fuchsia-600">${formatCurrency(it.tien_thue)}</td>
                 <td class="px-5 py-3 text-right font-mono font-extrabold text-rose-600">${formatCurrency(it.tong_tien_dong)}</td>
             `;
@@ -1141,7 +1173,7 @@ function renderItemsTable() {
     });
 
     if (rowIdx === 1) {
-        tbody.innerHTML = `<tr><td colspan="13" class="px-4 py-12 text-center text-slate-400 italic">Chưa có dữ liệu hàng hóa nào. Hãy quét thư mục hoặc tải file lên.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="px-4 py-12 text-center text-slate-400 italic">Chưa có dữ liệu hàng hóa nào. Hãy quét thư mục hoặc tải file lên.</td></tr>`;
     }
 }
 
@@ -1329,6 +1361,8 @@ async function loadExcelData() {
         }
 
         renderExcelTable(state.excelRows);
+        state.savedInvoices = [];
+        if (!document.getElementById('tab-items').classList.contains('hidden')) await loadSavedInvoiceDetails();
         populatePivotFilters();
         renderPivotTab();
     } catch (err) {
@@ -1349,23 +1383,33 @@ function renderExcelTable(rows) {
 
     rows.forEach(r => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-pink-50/40 transition-colors border-b border-pink-50';
+        tr.className = 'hover:bg-pink-50/40 transition-colors border-b border-pink-50 cursor-pointer';
+        tr.tabIndex = 0;
+        tr.setAttribute('role', 'button');
+        tr.setAttribute('aria-label', `Xem hóa đơn ${escapeHtml(r.so_hd)}`);
+        tr.addEventListener('click', () => openSavedInvoice(r));
+        tr.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openSavedInvoice(r);
+            }
+        });
 
         tr.innerHTML = `
-            <td class="px-5 py-3.5 text-center text-slate-400 font-medium">${r.stt}</td>
-            <td class="px-4 py-3.5 font-bold text-rose-600 font-mono">${r.so_hd}</td>
-            <td class="px-4 py-3.5 font-semibold text-pink-700 font-mono">${r.ky_hieu}</td>
-            <td class="px-4 py-3.5 text-slate-600">${r.ngay_lap}</td>
+            <td class="px-5 py-3.5 text-center text-slate-400 font-medium">${escapeHtml(r.stt)}</td>
+            <td class="px-4 py-3.5 font-bold text-rose-600 font-mono">${escapeHtml(r.so_hd)}</td>
+            <td class="px-4 py-3.5 font-semibold text-pink-700 font-mono">${escapeHtml(r.ky_hieu)}</td>
+            <td class="px-4 py-3.5 text-slate-600">${escapeHtml(r.ngay_lap)}</td>
             <td class="px-5 py-3.5">
-                <div class="font-bold text-slate-900 line-clamp-1 max-w-xs" title="${r.nb_ten}">${r.nb_ten}</div>
+                <div class="font-bold text-slate-900 line-clamp-1 max-w-xs" title="${escapeHtml(r.nb_ten)}">${escapeHtml(r.nb_ten)}</div>
             </td>
-            <td class="px-4 py-3.5 font-mono text-slate-700 font-medium">${r.nb_mst}</td>
-            <td class="px-5 py-3.5 text-slate-800 line-clamp-1 max-w-xs" title="${r.nm_ten}">${r.nm_ten}</td>
+            <td class="px-4 py-3.5 font-mono text-slate-700 font-medium">${escapeHtml(r.nb_mst)}</td>
+            <td class="px-5 py-3.5 text-slate-800 line-clamp-1 max-w-xs" title="${escapeHtml(r.nm_ten)}">${escapeHtml(r.nm_ten)}</td>
             <td class="px-4 py-3.5 text-right font-mono text-slate-700">${formatCurrency(r.tien_chua_thue)}</td>
             <td class="px-4 py-3.5 text-right font-mono text-fuchsia-600">${formatCurrency(r.tien_thue)}</td>
             <td class="px-5 py-3.5 text-right font-extrabold font-mono text-rose-600 text-sm">${formatCurrency(r.tong_tien)}</td>
-            <td class="px-4 py-3.5 text-center font-bold text-slate-700">${r.so_mat_hang}</td>
-            <td class="px-4 py-3.5 text-slate-400 text-[11px] font-mono">${r.thoi_gian_nhap || '---'}</td>
+            <td class="px-4 py-3.5 text-center font-bold text-slate-700">${escapeHtml(r.so_mat_hang)}</td>
+            <td class="px-4 py-3.5 text-slate-400 text-[11px] font-mono">${escapeHtml(r.thoi_gian_nhap || '---')}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -1519,6 +1563,7 @@ function applyTheme(themeId, notifyUser = false) {
     themeCards.forEach(card => {
         const cId = card.getAttribute('data-theme-id');
         const badge = card.querySelector('.theme-active-indicator');
+        card.setAttribute('aria-pressed', String(cId === actualId));
         if (cId === actualId) {
             card.classList.add('active-theme-card');
             card.classList.remove('border-pink-100');
@@ -1562,37 +1607,11 @@ function initThemeSystem() {
     if (container) {
         container.innerHTML = M3_THEMES.map(theme => {
             const isActive = theme.id === currentThemeId;
-            return `
-                <div class="theme-card relative p-4 rounded-2xl border-2 ${isActive ? 'active-theme-card' : 'border-pink-100 bg-white'} hover:border-pink-300 transition-all cursor-pointer flex flex-col justify-between group" data-theme-id="${theme.id}">
-                    <div>
-                        <!-- Bảng màu preview (3 chấm màu tròn: Primary, Secondary, Background) -->
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center space-x-1.5 p-1 bg-slate-50 rounded-xl border border-slate-100 shadow-inner">
-                                <span class="w-4 h-4 rounded-full shadow-sm" style="background-color: ${theme.primaryHex};" title="Primary Seed: ${theme.primaryHex}"></span>
-                                <span class="w-4 h-4 rounded-full shadow-sm" style="background-color: ${theme.secondaryHex};" title="Secondary / Accent: ${theme.secondaryHex}"></span>
-                                <span class="w-4 h-4 rounded-full border border-slate-200 shadow-sm" style="background-color: ${theme.bgHex};" title="Surface: ${theme.bgHex}"></span>
-                            </div>
-                            <span class="theme-active-indicator ${isActive ? 'inline-flex' : 'hidden'} items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-pink-700 shadow-sm border border-pink-200">
-                                <i class="fa-solid fa-check text-[9px] mr-1 text-emerald-600"></i> Đang dùng
-                            </span>
-                        </div>
-
-                        <!-- Tên bộ màu & Subtitle -->
-                        <h4 class="text-xs font-bold text-slate-900 group-hover:text-pink-600 transition-colors flex items-center justify-between">
-                            <span>${theme.name}</span>
-                        </h4>
-                        <p class="text-[10px] font-semibold text-pink-600/80 mt-0.5">${theme.subtitle}</p>
-                        <p class="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2">${theme.desc}</p>
-                    </div>
-
-                    <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
-                        <span class="text-[10px] font-mono text-slate-400 font-semibold">${theme.primaryHex.toUpperCase()}</span>
-                        <span class="text-[10px] font-bold text-slate-600 group-hover:text-pink-600 transition-colors">
-                            Áp dụng <i class="fa-solid fa-arrow-right text-[9px] ml-0.5"></i>
-                        </span>
-                    </div>
-                </div>
-            `;
+            return `<button type="button" class="theme-card flex items-center gap-2 px-3 py-2 rounded-xl border-2 text-left text-[11px] ${isActive ? 'active-theme-card' : 'border-pink-100 bg-white'} hover:border-pink-300 transition-colors" data-theme-id="${theme.id}" aria-pressed="${isActive}">
+                <span class="w-3 h-3 rounded-full shrink-0" style="background:${theme.primaryHex}"></span>
+                <span class="flex-1 text-slate-700">${theme.name}</span>
+                <span class="theme-active-indicator ${isActive ? 'inline-flex' : 'hidden'} text-pink-600"><i class="fa-solid fa-check"></i></span>
+            </button>`;
         }).join('');
 
         // Bắt sự kiện click vào từng card
@@ -1994,6 +2013,55 @@ function initInvoiceModal() {
     }
 }
 
+function renderInvoiceExtraInfo(inv) {
+    const container = document.getElementById('modal-extra-info');
+    container.replaceChildren();
+    const labels = {
+        filename: 'File gốc', file_type: 'Định dạng', supplier_folder: 'Thư mục', thoi_gian_nhap: 'Thời gian lưu',
+        phien_ban: 'Phiên bản hóa đơn', ty_gia: 'Tỷ giá', mst_tcgp: 'MST tổ chức giải pháp', nguoi_ky: 'Người ký',
+        email: 'Email', sdt: 'Điện thoại', stk: 'Số tài khoản', ngan_hang: 'Ngân hàng',
+        ma_cua_hang: 'Mã cửa hàng', ten_cua_hang: 'Tên cửa hàng', ho_ten_nguoi_mua: 'Họ tên người mua',
+        ma_hang: 'Mã hàng', tinh_chat: 'Tính chất', tong_tien_dong: 'Tổng dòng',
+        thue_suat: 'Thuế suất', thanh_tien: 'Tiền chưa thuế', tien_thue: 'Tiền thuế'
+    };
+    function section(title, values, keys = Object.keys(values || {})) {
+        const entries = keys.filter(key => values[key] !== undefined && values[key] !== null && values[key] !== '');
+        if (!entries.length) return;
+        const box = document.createElement('section');
+        const heading = document.createElement('h4');
+        heading.className = 'font-semibold text-slate-700 mb-1';
+        heading.textContent = title;
+        box.appendChild(heading);
+        const list = document.createElement('dl');
+        list.className = 'grid grid-cols-1 sm:grid-cols-2 gap-2';
+        entries.forEach(key => {
+            const entry = document.createElement('div');
+            const term = document.createElement('dt');
+            term.className = 'text-slate-500';
+            term.textContent = labels[key] || key;
+            const value = document.createElement('dd');
+            value.className = 'text-slate-800 break-words';
+            value.textContent = typeof values[key] === 'number' ? formatNumber(values[key]) : String(values[key]);
+            entry.append(term, value);
+            list.appendChild(entry);
+        });
+        box.appendChild(list);
+        container.appendChild(box);
+    }
+    section('Nguồn hóa đơn', inv, ['filename', 'file_type', 'supplier_folder', 'thoi_gian_nhap']);
+    section('Thông tin bổ sung', inv.thong_tin_chung, ['phien_ban', 'ty_gia', 'mst_tcgp', 'nguoi_ky']);
+    section('Liên hệ bên bán', inv.nguoi_ban, ['email', 'stk', 'ngan_hang', 'ma_cua_hang', 'ten_cua_hang']);
+    section('Liên hệ bên mua', inv.nguoi_mua, ['sdt', 'email', 'stk', 'ngan_hang', 'ho_ten_nguoi_mua']);
+    (inv.thanh_toan.chi_tiet_thue || []).forEach((tax, index) => section(`Thuế suất ${index + 1}`, tax));
+    (inv.hang_hoa || []).forEach((item, index) => section(`Thông tin sản phẩm ${index + 1}`, item, ['ma_hang', 'tinh_chat', 'tong_tien_dong']));
+    if (inv.source === 'excel') {
+        const note = document.createElement('p');
+        note.className = 'text-slate-400';
+        note.textContent = 'Hiển thị thông tin đã lưu trong Excel. Các trường không được lưu trong workbook không có dữ liệu để hiển thị.';
+        container.appendChild(note);
+    }
+}
+
 function showInvoiceModal(inv) {
     const modal = document.getElementById('invoice-modal');
     const tt = inv.thong_tin_chung;
@@ -2006,20 +2074,18 @@ function showInvoiceModal(inv) {
     document.getElementById('modal-seller-address').textContent = nb.dia_chi || '---';
     document.getElementById('modal-seller-phone').textContent = nb.sdt || '---';
 
-    document.getElementById('modal-inv-title').textContent = tt.ten_hoa_don || 'HÓA ĐƠN GIÁ TRỊ GIA TĂNG';
+    document.getElementById('modal-inv-title').textContent = tt.ten_hoa_don || 'HÓA ĐƠN';
     document.getElementById('modal-inv-form').textContent = tt.mau_so || '---';
     document.getElementById('modal-inv-series').textContent = tt.ky_hieu || '---';
     document.getElementById('modal-inv-no').textContent = tt.so_hd || '---';
     document.getElementById('modal-inv-date').textContent = tt.ngay_lap || '---';
-    document.getElementById('modal-inv-taxcode-auth').innerHTML = tt.ma_cqt 
-        ? `Mã CQT: <span class="font-mono font-semibold text-slate-700">${tt.ma_cqt}</span>` 
-        : '';
+    document.getElementById('modal-inv-taxcode-auth').textContent = tt.ma_cqt ? `Mã CQT: ${tt.ma_cqt}` : '';
 
     document.getElementById('modal-buyer-name').textContent = nm.ten || '---';
     document.getElementById('modal-buyer-mst').textContent = nm.mst || '---';
     document.getElementById('modal-buyer-address').textContent = nm.dia_chi || '---';
-    document.getElementById('modal-payment-method').textContent = tt.hinh_thuc_tt || 'TM/CK';
-    document.getElementById('modal-currency').textContent = tt.dong_tien || 'VND';
+    document.getElementById('modal-payment-method').textContent = tt.hinh_thuc_tt || '---';
+    document.getElementById('modal-currency').textContent = tt.dong_tien || '---';
 
     const itemsBody = document.getElementById('modal-items-body');
     itemsBody.innerHTML = '';
@@ -2027,13 +2093,13 @@ function showInvoiceModal(inv) {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-pink-50/40';
         tr.innerHTML = `
-            <td class="border border-pink-200 px-2 py-2 text-center text-slate-500">${it.stt}</td>
-            <td class="border border-pink-200 px-3 py-2 font-medium text-slate-900">${it.ten_hang}</td>
-            <td class="border border-pink-200 px-2 py-2 text-center text-slate-600">${it.dvt || ''}</td>
+            <td class="border border-pink-200 px-2 py-2 text-center text-slate-500">${escapeHtml(it.stt)}</td>
+            <td class="border border-pink-200 px-3 py-2 font-medium text-slate-900">${escapeHtml(it.ten_hang)}</td>
+            <td class="border border-pink-200 px-2 py-2 text-center text-slate-600">${escapeHtml(it.dvt || '')}</td>
             <td class="border border-pink-200 px-2 py-2 text-right font-mono">${formatNumber(it.so_luong)}</td>
             <td class="border border-pink-200 px-3 py-2 text-right font-mono">${formatCurrency(it.don_gia)}</td>
             <td class="border border-pink-200 px-3 py-2 text-right font-mono font-semibold">${formatCurrency(it.thanh_tien)}</td>
-            <td class="border border-pink-200 px-2 py-2 text-center font-mono font-bold text-pink-600">${it.thue_suat || ''}</td>
+            <td class="border border-pink-200 px-2 py-2 text-center font-mono font-bold text-pink-600">${escapeHtml(it.thue_suat || '')}</td>
             <td class="border border-pink-200 px-3 py-2 text-right font-mono text-fuchsia-600">${formatCurrency(it.tien_thue)}</td>
         `;
         itemsBody.appendChild(tr);
@@ -2044,8 +2110,8 @@ function showInvoiceModal(inv) {
     document.getElementById('modal-total-amount').textContent = formatCurrency(toan.tong_tien_thanh_toan);
     document.getElementById('modal-total-in-words').textContent = toan.tong_tien_chu || '---';
 
-    const signDate = tt.ngay_ky ? tt.ngay_ky.replace('T', ' ') : 'Hợp lệ';
-    document.getElementById('modal-sign-date').textContent = `Ngày ký: ${signDate}`;
+    document.getElementById('modal-sign-date').textContent = tt.ngay_ky ? `Ngày ký: ${tt.ngay_ky.replace('T', ' ')}` : 'Chưa có thông tin chữ ký';
+    renderInvoiceExtraInfo(inv);
 
     modal.classList.remove('hidden');
     modal.classList.add('flex');

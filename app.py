@@ -45,6 +45,7 @@ from excel_manager import (
     ensure_excel_file,
     save_invoices_to_excel,
     read_excel_summary,
+    read_excel_invoice_details,
     get_existing_invoice_keys,
     init_blank_excel_file,
     clear_excel_data
@@ -382,6 +383,11 @@ def get_excel_data():
     global current_excel_path
     summary = read_excel_summary(current_excel_path)
     return jsonify(summary)
+
+@app.route('/api/invoice-details', methods=['GET'])
+def get_invoice_details():
+    result = read_excel_invoice_details(current_excel_path, request.args.get('stt'))
+    return jsonify(result), 200 if result.get('success') else 400
 
 @app.route('/api/download-excel', methods=['GET'])
 def download_excel():
