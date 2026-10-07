@@ -14,6 +14,8 @@ def startup_html():
     logo = base64.b64encode((root / 'static/images/logo.png').read_bytes()).decode('ascii')
     css = (root / 'static/css/startup.css').read_text(encoding='utf-8')
     markup = (root / 'templates/startup.html').read_text(encoding='utf-8')
+    from config import APP_VERSION
+    markup = markup.replace('{{ app_version }}', APP_VERSION)
     markup = markup.replace('/static/images/logo.png', f'data:image/png;base64,{logo}')
     return f'<!doctype html><html lang="vi"><head><meta charset="utf-8"><style>{css}</style></head><body>{markup}</body></html>'
 
@@ -35,10 +37,7 @@ def start_application(window, server_state):
         logging.exception('Không thể khởi động ứng dụng')
         message = json.dumps(f'Không thể khởi động ứng dụng: {exc}', ensure_ascii=False)
         try:
-            window.evaluate_js(
-                "document.getElementById('startup-message').textContent = " + message + ";"
-                "document.querySelector('.startup-progress').hidden = true;"
-            )
+            window.evaluate_js('alert(' + message + ');')
         except Exception:
             logging.exception('Không thể hiển thị thông báo khởi động')
 

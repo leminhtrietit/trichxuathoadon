@@ -4,7 +4,7 @@ Ngày kiểm tra: 07/10/2026. Phạm vi: mã nguồn Flask, PyWebView, đọc/gh
 
 ## Những thay đổi đã hoàn thành
 
-- Thêm màn hình chờ dùng logo hiện có, nền xanh tím nhẹ và thanh chuyển động. Màn hình Desktop tự chứa ảnh/CSS, hiển thị trước khi import Flask/parser/openpyxl; chuyển sang giao diện khi máy chủ sẵn sàng. Giao diện web giữ màn hình chờ đến khi các yêu cầu dữ liệu ban đầu kết thúc, có cơ chế bỏ lớp chờ sau 15 giây nếu yêu cầu bị treo. Không thêm thời gian chờ cố định.
+- Màn hình chờ tối giản theo yêu cầu mới: tên app lớn phía trên, phiên bản bên dưới, dòng “powered by” kèm logo ở phía dưới. Không có card, thanh chuyển động hoặc nội dung phụ; giữ nền xanh tím nhẹ. Màn hình Desktop tự chứa ảnh/CSS, hiển thị trước khi import Flask/parser/openpyxl; chuyển sang giao diện khi máy chủ sẵn sàng. Giao diện web giữ màn hình chờ đến khi các yêu cầu dữ liệu ban đầu kết thúc, có cơ chế bỏ lớp chờ sau 15 giây nếu yêu cầu bị treo. Không thêm thời gian chờ cố định.
 - Dùng cổng do hệ điều hành cấp và bind ngay; bỏ dò cổng và vòng lặp đọc `/api/status` để chờ máy chủ.
 - Bỏ việc mở workbook có sẵn ngay khi import app. Đọc tổng hợp bằng chế độ streaming, chỉ duyệt sheet tổng hợp; cache kết quả theo đường dẫn, kích thước và thời điểm thay đổi file. Cache có khóa cho các lượt đọc đồng thời, tự làm mới khi Excel được lưu hoặc sửa bên ngoài, và trả bản sao để tránh bên gọi sửa kết quả lưu trong cache.
 - Tái sử dụng bộ định dạng số ở frontend.
@@ -23,7 +23,7 @@ Benchmark dùng workbook tổng hợp tự sinh, mỗi hóa đơn có 5 dòng h�
 | 1.000 / 5.000 | 2,716 giây | 0,722 giây | 0,055 giây |
 | 10.000 / 50.000 | 20,111 giây | 7,745 giây | 0,091 giây |
 
-Bản `.exe` cũ: 46.173.169 byte; bản v2.0.1 mới: 26.257.576 byte, giảm khoảng 43%. Dung lượng này phụ thuộc môi trường đóng gói.
+Bản `.exe` cũ: 46.173.169 byte; bản v2.0.1 mới: 26.256.820 byte, giảm khoảng 43%. Dung lượng này phụ thuộc môi trường đóng gói.
 
 Chạy lại benchmark từ thư mục dự án: `python benchmarks/benchmark_summary.py`. Kết quả lưu ở `build/benchmark-results.json`.
 

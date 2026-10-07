@@ -120,7 +120,8 @@ class StartupPerformanceTests(unittest.TestCase):
         html = startup_html()
         self.assertIn('data:image/png;base64,', html)
         self.assertNotIn('src="/static/', html)
-        self.assertIn('startup-loading', html)
+        import config
+        self.assertIn(f'v{config.APP_VERSION}', html)
 
 
 if __name__ == '__main__':

@@ -2,7 +2,7 @@
 
 Ngày đóng gói: 07/10/2026.
 
-- Thêm màn hình chờ logo MinhTrietEras trong lúc nạp ứng dụng và dữ liệu.
+- Màn hình chờ chỉ có tên app lớn, phiên bản và “powered by” kèm logo; không có card hoặc nội dung phụ. Phiên bản lấy từ cấu hình chung cho cả Desktop và Web.
 - Tối ưu đọc tổng hợp Excel bằng streaming và cache theo thay đổi file.
 - Đóng gói CSS/icon cục bộ để giao diện dùng được offline.
 - Lưu cấu hình và Excel mặc định của bản Windows tại `%LOCALAPPDATA%\MinhTrietEras\TrichXuatHoaDon\data`.
