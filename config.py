@@ -17,6 +17,15 @@ DEFAULT_EXCEL_PATH = os.path.join(DATA_DIR, 'danh_sach_hoa_don.xlsx')
 # Đường dẫn file mẫu ban đầu
 SAMPLE_XML_PATH = r"C:\Users\minht\Downloads\348826-T01-2026.xml"
 
+# Thông tin Tác giả & Tracking Bản Quyền
+APP_NAME = "Trích xuất hóa đơn"
+APP_VERSION = "2.0.0"
+AUTHOR = "Lê Minh Triết"
+ORGANIZATION = "MinhTrietEras"
+WEBSITE = "https://leminhtriet.com"
+COPYRIGHT = "Copyright © 2026 Lê Minh Triết - MinhTrietEras. All rights reserved."
+TRACKING_ID = "MTE-TXHD-2026-VN"
+
 # Cổng chạy Web app
 PORT = 5000
 HOST = '127.0.0.1'

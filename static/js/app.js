@@ -6,6 +6,8 @@
 // Trạng thái ứng dụng
 const state = {
     parsedInvoices: [],
+    lastExtractionData: null,
+    selectedUploadFiles: [],
     excelRows: [],
     pivotBySupplier: [],
     pivotByMonth: [],
@@ -21,6 +23,7 @@ const state = {
 // Khởi chạy khi tài liệu sẵn sàng
 document.addEventListener('DOMContentLoaded', () => {
     initTabs();
+    initExtractionModals();
     initFolderScanner();
     initPivotTab();
     initDropzone();
@@ -29,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initInitExcelModal();
     initClearDataModal();
     initInvoiceModal();
+    initAboutModal();
     loadAppStatus();
     loadExcelData();
 });
@@ -122,18 +126,113 @@ function initTabs() {
 }
 
 // ==============================================================
+// 🌟 KHỞI TẠO CÁC MODAL TRÍCH XUẤT & ĐỐI CHIẾU
+// ==============================================================
+function initExtractionModals() {
+    // 1. Thẻ mở Modal Quét Thư Mục
+    const cardFolder = document.getElementById('card-open-folder-modal');
+    const modalFolder = document.getElementById('modal-folder-scan');
+    const btnCloseFolder = document.getElementById('btn-close-folder-modal');
+    const btnCancelFolder = document.getElementById('btn-cancel-folder-modal');
+
+    if (cardFolder && modalFolder) {
+        cardFolder.addEventListener('click', () => {
+            modalFolder.classList.remove('hidden');
+            modalFolder.classList.add('flex');
+        });
+    }
+
+    [btnCloseFolder, btnCancelFolder].forEach(btn => {
+        if (btn && modalFolder) {
+            btn.addEventListener('click', () => {
+                modalFolder.classList.add('hidden');
+                modalFolder.classList.remove('flex');
+            });
+        }
+    });
+
+    // 2. Thẻ mở Modal Tải File Trực Tiếp
+    const cardUpload = document.getElementById('card-open-upload-modal');
+    const modalUpload = document.getElementById('modal-file-upload');
+    const btnCloseUpload = document.getElementById('btn-close-upload-modal');
+    const btnCancelUpload = document.getElementById('btn-cancel-upload-modal');
+
+    if (cardUpload && modalUpload) {
+        cardUpload.addEventListener('click', () => {
+            modalUpload.classList.remove('hidden');
+            modalUpload.classList.add('flex');
+        });
+    }
+
+    [btnCloseUpload, btnCancelUpload].forEach(btn => {
+        if (btn && modalUpload) {
+            btn.addEventListener('click', () => {
+                modalUpload.classList.add('hidden');
+                modalUpload.classList.remove('flex');
+            });
+        }
+    });
+
+    // 3. Modal Kết Quả Trích Xuất & Đối Chiếu Dữ Liệu
+    const modalResult = document.getElementById('modal-extraction-result');
+    const btnCloseResult = document.getElementById('btn-close-result-modal');
+    const btnCancelResult = document.getElementById('btn-cancel-result-modal');
+    const btnReopenResult = document.getElementById('btn-reopen-result-modal');
+
+    if (btnReopenResult && modalResult) {
+        btnReopenResult.addEventListener('click', () => {
+            if (state.lastExtractionData) {
+                openExtractionResultModal(state.lastExtractionData);
+            } else if (state.parsedInvoices.length > 0) {
+                openExtractionResultModal({
+                    invoices: state.parsedInvoices,
+                    total: state.parsedInvoices.length,
+                    valid_count: state.parsedInvoices.length,
+                    error_count: 0
+                });
+            } else {
+                showToast('Chưa có kết quả trích xuất nào trong phiên làm việc.', 'warning');
+            }
+        });
+    }
+
+    [btnCloseResult, btnCancelResult].forEach(btn => {
+        if (btn && modalResult) {
+            btn.addEventListener('click', () => {
+                modalResult.classList.add('hidden');
+                modalResult.classList.remove('flex');
+            });
+        }
+    });
+
+    // Đóng khi click ra vùng xám mờ backdrop của các modal
+    [modalFolder, modalUpload, modalResult].forEach(m => {
+        if (m) {
+            m.addEventListener('click', (e) => {
+                if (e.target === m) {
+                    m.classList.add('hidden');
+                    m.classList.remove('flex');
+                }
+            });
+        }
+    });
+}
+
+// ==============================================================
 // 🌟 XỬ LÝ QUÉT HÀNG LOẠT TỪ THƯ MỤC CỐ ĐỊNH (BATCH FOLDER SCANNER)
 // ==============================================================
 function initFolderScanner() {
     const btnBrowseNative = document.getElementById('btn-browse-folder-native');
     const btnScanFolder = document.getElementById('btn-scan-folder');
     const inputFolderPath = document.getElementById('input-folder-path');
+    const modalFolder = document.getElementById('modal-folder-scan');
+    const loadingBox = document.getElementById('folder-scan-loading');
 
-    // Mở hộp thoại chọn thư mục Windows trực tiếp
-    if (btnBrowseNative) {
+    // Mở hộp thoại chọn thư mục Windows trực tiếp (Native Folder Dialog)
+    if (btnBrowseNative && inputFolderPath) {
         btnBrowseNative.addEventListener('click', async () => {
             btnBrowseNative.disabled = true;
-            btnBrowseNative.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-pink-500"></i><span>Đang mở...</span>`;
+            btnBrowseNative.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-pink-500 mr-1.5"></i><span>Đang mở...</span>`;
 
             try {
                 const res = await fetch('/api/select-folder-dialog', { method: 'POST' });
@@ -148,13 +247,13 @@ function initFolderScanner() {
                 showToast('Lỗi: ' + err.message, 'error');
             } finally {
                 btnBrowseNative.disabled = false;
-                btnBrowseNative.innerHTML = `<i class="fa-solid fa-folder-magnifying-glass text-pink-500"></i><span>Chọn Thư Mục...</span>`;
+                btnBrowseNative.innerHTML = `<i class="fa-solid fa-folder-magnifying-glass text-pink-500 mr-1.5"></i><span>Chọn Thư Mục...</span>`;
             }
         });
     }
 
-    // Bắt đầu Quét & Trích xuất
-    if (btnScanFolder) {
+    // Bắt đầu Quét & Trích xuất (Bóc tách & đối chiếu trước, CHƯA auto_save)
+    if (btnScanFolder && inputFolderPath) {
         btnScanFolder.addEventListener('click', async () => {
             const folderPath = inputFolderPath.value.trim();
             if (!folderPath) {
@@ -162,17 +261,12 @@ function initFolderScanner() {
                 return;
             }
 
-            // Lấy chế độ trùng lặp
-            const duplicateModeRadio = document.querySelector('input[name="duplicate-mode"]:checked');
-            const duplicateMode = duplicateModeRadio ? duplicateModeRadio.value : 'replace';
-            const isOverwrite = (duplicateMode === 'replace');
-
-            const isRecursive = document.getElementById('chk-scan-recursive').checked;
-            const isAutoSave = document.getElementById('chk-scan-auto-save').checked;
+            const chkRecursive = document.getElementById('chk-scan-recursive');
+            const isRecursive = chkRecursive ? chkRecursive.checked : true;
 
             btnScanFolder.disabled = true;
-            btnScanFolder.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Đang quét thư mục...</span>`;
-            showToast(`Đang quét hóa đơn XML & PDF trong: ${folderPath}`, 'info');
+            btnScanFolder.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Đang bóc tách...</span>`;
+            if (loadingBox) loadingBox.classList.remove('hidden');
 
             try {
                 const res = await fetch('/api/scan-folder', {
@@ -181,86 +275,54 @@ function initFolderScanner() {
                     body: JSON.stringify({
                         folder_path: folderPath,
                         recursive: isRecursive,
-                        auto_save: isAutoSave,
-                        overwrite: isOverwrite
+                        auto_save: false,   // Bóc tách & đối chiếu trước, CHƯA ghi Excel ngay!
+                        overwrite: false
                     })
                 });
 
                 const data = await res.json();
 
                 if (data.success) {
-                    // Cập nhật thẻ kết quả quét
-                    const summaryCard = document.getElementById('scan-summary-card');
-                    summaryCard.classList.remove('hidden');
-
-                    document.getElementById('scan-folder-display').textContent = data.folder_path;
-                    document.getElementById('scan-total-files').textContent = data.total_files;
-                    document.getElementById('scan-valid-files').textContent = data.valid_count;
-
-                    if (data.save_info) {
-                        document.getElementById('scan-added-count').textContent = data.save_info.added || 0;
-                        document.getElementById('scan-updated-count').textContent = data.save_info.updated || 0;
-                        document.getElementById('scan-skipped-count').textContent = data.save_info.skipped || 0;
-
-                        let msg = `Đã quét ${data.total_files} file! Kết quả Excel: +${data.save_info.added} mới`;
-                        if (data.save_info.updated > 0) msg += `, ${data.save_info.updated} đã thay thế`;
-                        if (data.save_info.skipped > 0) msg += `, ${data.save_info.skipped} bỏ qua`;
-                        showToast(msg, 'success');
-                    } else {
-                        document.getElementById('scan-added-count').textContent = 'Chưa lưu';
-                        document.getElementById('scan-updated-count').textContent = '-';
-                        document.getElementById('scan-skipped-count').textContent = '-';
-                        showToast(`Đã tìm thấy & bóc tách ${data.valid_count} hóa đơn!`, 'success');
+                    // Đóng modal quét thư mục
+                    if (modalFolder) {
+                        modalFolder.classList.add('hidden');
+                        modalFolder.classList.remove('flex');
                     }
 
-                    // Hiển thị danh sách các thư mục nhà cung cấp được phát hiện
-                    const foldersBox = document.getElementById('scan-supplier-folders-box');
-                    const foldersList = document.getElementById('scan-supplier-folders-list');
-                    const foldersCount = document.getElementById('scan-supplier-folders-count');
-
-                    if (foldersBox && foldersList) {
-                        if (data.supplier_folders && data.supplier_folders.length > 0) {
-                            foldersBox.classList.remove('hidden');
-                            if (foldersCount) foldersCount.textContent = `${data.supplier_folders.length} thư mục NCC`;
-                            foldersList.innerHTML = data.supplier_folders.map(f => `
-                                <span class="inline-flex items-center px-3 py-1 rounded-xl bg-pink-50 border border-pink-200 text-pink-900 font-medium text-xs">
-                                    <i class="fa-solid fa-folder-open text-pink-500 mr-1.5 text-xs"></i>
-                                    <span class="font-bold mr-1.5">${f.name}</span>
-                                    <span class="bg-pink-200/80 text-pink-800 text-[10px] px-1.5 py-0.2 rounded-full font-bold">(${f.count} file)</span>
-                                </span>
-                            `).join('');
-                        } else {
-                            foldersBox.classList.add('hidden');
-                        }
-                    }
-
-                    // Đưa vào danh sách xem trước
+                    // Lưu dữ liệu vào state
+                    state.lastExtractionData = data;
                     if (data.invoices && data.invoices.length > 0) {
                         processParsedResults(data.invoices);
                     }
 
-                    // Tải lại thống kê Excel
-                    loadAppStatus();
-                    loadExcelData();
+                    // Mở popup xem thông tin & đối chiếu trùng lặp
+                    openExtractionResultModal(data);
                 } else {
-                    showToast(data.error || 'Có lỗi khi quét thư mục', 'error');
+                    showToast(data.error || 'Có lỗi khi quét thư mục hóa đơn', 'error');
                 }
             } catch (err) {
                 showToast('Lỗi: ' + err.message, 'error');
             } finally {
                 btnScanFolder.disabled = false;
-                btnScanFolder.innerHTML = `<i class="fa-solid fa-bolt"></i><span>Quét & Trích Xuất Ngay</span>`;
+                btnScanFolder.innerHTML = `<i class="fa-solid fa-bolt"></i><span>Bắt Đầu Trích Xuất</span>`;
+                if (loadingBox) loadingBox.classList.add('hidden');
             }
         });
     }
 }
 
-// Xử lý kéo thả và tải file trực tiếp
+// ==============================================================
+// 🌟 XỬ LÝ TẢI LÊN FILE TRỰC TIẾP TRONG MODAL
+// ==============================================================
 function initDropzone() {
-    const dropzone = document.getElementById('dropzone');
-    const fileInput = document.getElementById('file-input');
-    const btnBrowse = document.getElementById('btn-browse');
-    const btnSample = document.getElementById('btn-load-sample');
+    const dropzone = document.getElementById('modal-dropzone');
+    const fileInput = document.getElementById('modal-file-input');
+    const btnBrowse = document.getElementById('btn-modal-browse-files');
+    const btnSample = document.getElementById('btn-modal-load-sample');
+    const btnClearFiles = document.getElementById('btn-clear-selected-files');
+    const btnStartUpload = document.getElementById('btn-start-upload-process');
+    const loadingBox = document.getElementById('upload-scan-loading');
+    const modalUpload = document.getElementById('modal-file-upload');
 
     if (btnBrowse && fileInput) {
         btnBrowse.addEventListener('click', (e) => {
@@ -294,7 +356,7 @@ function initDropzone() {
             const dt = e.dataTransfer;
             const files = dt.files;
             if (files && files.length > 0) {
-                handleUploadFiles(files);
+                addFilesToUploadList(files);
             }
         });
     }
@@ -302,9 +364,16 @@ function initDropzone() {
     if (fileInput) {
         fileInput.addEventListener('change', () => {
             if (fileInput.files && fileInput.files.length > 0) {
-                handleUploadFiles(fileInput.files);
+                addFilesToUploadList(fileInput.files);
                 fileInput.value = '';
             }
+        });
+    }
+
+    if (btnClearFiles) {
+        btnClearFiles.addEventListener('click', () => {
+            state.selectedUploadFiles = [];
+            renderSelectedUploadFiles();
         });
     }
 
@@ -314,34 +383,121 @@ function initDropzone() {
             loadSampleInvoice();
         });
     }
-}
 
-// Gọi API tải file lên server
-async function handleUploadFiles(files) {
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-        formData.append('files', files[i]);
-    }
+    if (btnStartUpload) {
+        btnStartUpload.addEventListener('click', async () => {
+            if (!state.selectedUploadFiles || state.selectedUploadFiles.length === 0) {
+                showToast('Vui lòng chọn ít nhất 1 file hóa đơn để trích xuất!', 'warning');
+                return;
+            }
 
-    showToast(`Đang bóc tách ${files.length} tệp hóa đơn...`, 'info');
+            btnStartUpload.disabled = true;
+            btnStartUpload.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Đang xử lý...</span>`;
+            if (loadingBox) loadingBox.classList.remove('hidden');
 
-    try {
-        const res = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData
+            const formData = new FormData();
+            state.selectedUploadFiles.forEach(f => formData.append('files', f));
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Đóng modal tải file
+                    if (modalUpload) {
+                        modalUpload.classList.add('hidden');
+                        modalUpload.classList.remove('flex');
+                    }
+
+                    // Reset danh sách file đã chọn
+                    state.selectedUploadFiles = [];
+                    renderSelectedUploadFiles();
+
+                    // Lưu dữ liệu vào state
+                    state.lastExtractionData = data;
+                    if (data.invoices && data.invoices.length > 0) {
+                        processParsedResults(data.invoices);
+                    }
+
+                    // Mở popup kết quả đối chiếu
+                    openExtractionResultModal(data);
+                } else {
+                    showToast(data.error || 'Có lỗi xảy ra khi bóc tách hóa đơn', 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi: ' + err.message, 'error');
+            } finally {
+                btnStartUpload.disabled = false;
+                btnStartUpload.innerHTML = `<i class="fa-solid fa-bolt"></i><span>Bắt Đầu Trích Xuất</span>`;
+                if (loadingBox) loadingBox.classList.add('hidden');
+            }
         });
-        const data = await res.json();
-
-        if (data.success) {
-            processParsedResults(data.invoices);
-            showToast(`Đã đọc thành công ${data.valid_count} hóa đơn!`, 'success');
-        } else {
-            showToast(data.error || 'Có lỗi xảy ra khi tải file', 'error');
-        }
-    } catch (err) {
-        showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
 }
+
+function addFilesToUploadList(fileList) {
+    for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        // Tránh trùng lặp tên & kích thước
+        const exists = state.selectedUploadFiles.some(f => f.name === file.name && f.size === file.size);
+        if (!exists) {
+            state.selectedUploadFiles.push(file);
+        }
+    }
+    renderSelectedUploadFiles();
+}
+
+function renderSelectedUploadFiles() {
+    const box = document.getElementById('modal-selected-files-box');
+    const countBadge = document.getElementById('modal-selected-files-count');
+    const list = document.getElementById('modal-selected-files-list');
+    const btnStart = document.getElementById('btn-start-upload-process');
+
+    if (!box || !list || !btnStart) return;
+
+    const count = state.selectedUploadFiles.length;
+    if (count > 0) {
+        box.classList.remove('hidden');
+        if (countBadge) countBadge.textContent = `${count} tệp`;
+        btnStart.disabled = false;
+        btnStart.className = 'px-5 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl text-xs font-bold shadow-md shadow-pink-500/20 transition-all flex items-center space-x-2 cursor-pointer';
+
+        list.innerHTML = state.selectedUploadFiles.map((file, idx) => {
+            const sizeStr = file.size > 1024 * 1024
+                ? (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+                : (file.size / 1024).toFixed(1) + ' KB';
+
+            let icon = 'fa-file-code text-blue-500';
+            if (file.name.toLowerCase().endsWith('.pdf')) icon = 'fa-file-pdf text-rose-500';
+            else if (file.name.toLowerCase().endsWith('.zip')) icon = 'fa-file-zipper text-amber-500';
+
+            return `
+                <div class="flex items-center justify-between p-2 rounded-xl bg-pink-50/50 border border-pink-100 text-xs">
+                    <div class="flex items-center space-x-2 truncate">
+                        <i class="fa-regular ${icon} text-sm shrink-0"></i>
+                        <span class="truncate font-semibold text-slate-800" title="${file.name}">${file.name}</span>
+                        <span class="text-[10px] text-slate-400 font-mono">(${sizeStr})</span>
+                    </div>
+                    <button type="button" class="text-slate-400 hover:text-red-500 ml-2 p-1 cursor-pointer" onclick="removeSelectedUploadFile(${idx})" title="Xóa file này">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
+    } else {
+        box.classList.add('hidden');
+        btnStart.disabled = true;
+        btnStart.className = 'px-5 py-2.5 bg-slate-300 text-white rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-not-allowed';
+    }
+}
+
+window.removeSelectedUploadFile = function(idx) {
+    state.selectedUploadFiles.splice(idx, 1);
+    renderSelectedUploadFiles();
+};
 
 // Nạp hóa đơn mẫu có sẵn
 async function loadSampleInvoice() {
@@ -350,7 +506,14 @@ async function loadSampleInvoice() {
         const res = await fetch('/api/load-sample', { method: 'POST' });
         const data = await res.json();
         if (data.success) {
+            const modalUpload = document.getElementById('modal-file-upload');
+            if (modalUpload) {
+                modalUpload.classList.add('hidden');
+                modalUpload.classList.remove('flex');
+            }
+
             processParsedResults(data.invoices);
+            openExtractionResultModal(data);
             showToast('Đã nạp thành công hóa đơn mẫu!', 'success');
         } else {
             showToast(data.error || 'Không nạp được file mẫu', 'error');
@@ -359,6 +522,274 @@ async function loadSampleInvoice() {
         showToast('Lỗi: ' + err.message, 'error');
     }
 }
+
+// ==============================================================
+// 🌟 POPUP XEM KẾT QUẢ TRÍCH XUẤT, ĐỐI CHIẾU TRÙNG LẶP & NÚT LƯU EXCEL
+// ==============================================================
+function openExtractionResultModal(data) {
+    const modal = document.getElementById('modal-extraction-result');
+    if (!modal) return;
+
+    state.lastExtractionData = data;
+    const invoices = data.invoices || [];
+    const validInvoices = invoices.filter(inv => inv.success);
+    const duplicates = validInvoices.filter(inv => inv.already_in_excel);
+    const newInvoices = validInvoices.filter(inv => !inv.already_in_excel);
+    const errors = invoices.filter(inv => !inv.success);
+
+    // 1. Tên file Excel
+    const excelNameElem = document.getElementById('result-modal-excel-name');
+    if (excelNameElem) {
+        const path = data.excel_path || state.excelPath || 'danh_sach_hoa_don.xlsx';
+        excelNameElem.textContent = path.split('\\').pop() || 'danh_sach_hoa_don.xlsx';
+    }
+
+    // 2. Thẻ KPI
+    const kpiTotal = document.getElementById('result-kpi-total');
+    const kpiNew = document.getElementById('result-kpi-new');
+    const kpiDup = document.getElementById('result-kpi-duplicate');
+    const kpiErr = document.getElementById('result-kpi-error');
+
+    if (kpiTotal) kpiTotal.textContent = validInvoices.length;
+    if (kpiNew) kpiNew.textContent = newInvoices.length;
+    if (kpiDup) kpiDup.textContent = duplicates.length;
+    if (kpiErr) kpiErr.textContent = errors.length;
+
+    // 3. Khung cảnh báo trùng lặp & tùy chọn xử lý
+    const banner = document.getElementById('result-duplicate-banner');
+    const btnConfirm = document.getElementById('btn-confirm-add-to-excel');
+    const btnConfirmText = document.getElementById('btn-confirm-add-text');
+
+    if (banner) {
+        if (duplicates.length > 0) {
+            banner.className = 'p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-xs space-y-2.5 animate-fade-in';
+            banner.innerHTML = `
+                <div class="flex items-center text-amber-900 font-bold">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600 mr-2 text-sm"></i>
+                    <span>Phát hiện <strong class="text-rose-700">${duplicates.length}</strong> hóa đơn đã tồn tại trong file Excel (trùng Ký hiệu + Số HĐ + MST bên bán)</span>
+                </div>
+                <p class="text-[11px] text-slate-600">Vui lòng chọn cách xử lý khi thêm vào Excel:</p>
+                <div class="space-y-1.5 pl-1">
+                    <label class="flex items-center space-x-2.5 cursor-pointer select-none">
+                        <input type="radio" name="modal-dup-option" value="skip" checked class="text-pink-600 focus:ring-pink-500 w-4 h-4 accent-pink-600 cursor-pointer">
+                        <span class="font-bold text-slate-900 text-xs">Chỉ thêm <strong class="text-emerald-700">${newInvoices.length}</strong> hóa đơn MỚI (Bỏ qua ${duplicates.length} hóa đơn đã trùng)</span>
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Khuyên dùng</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 cursor-pointer select-none">
+                        <input type="radio" name="modal-dup-option" value="replace" class="text-pink-600 focus:ring-pink-500 w-4 h-4 accent-pink-600 cursor-pointer">
+                        <span class="font-medium text-slate-700 text-xs">Cập nhật / Ghi đè <strong class="text-blue-700">${duplicates.length}</strong> hóa đơn trùng và thêm <strong class="text-emerald-700">${newInvoices.length}</strong> hóa đơn mới</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 cursor-pointer select-none">
+                        <input type="radio" name="modal-dup-option" value="all" class="text-pink-600 focus:ring-pink-500 w-4 h-4 accent-pink-600 cursor-pointer">
+                        <span class="font-medium text-slate-700 text-xs">Thêm tất cả (Bao gồm cả các hóa đơn trùng lặp)</span>
+                    </label>
+                </div>
+            `;
+        } else {
+            banner.className = 'p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs flex items-center space-x-3 text-emerald-900 animate-fade-in';
+            banner.innerHTML = `
+                <i class="fa-solid fa-circle-check text-emerald-600 text-xl shrink-0"></i>
+                <div>
+                    <span class="font-bold">Tuyệt vời! Không phát hiện hóa đơn trùng lặp.</span>
+                    <p class="text-[11px] text-emerald-700 mt-0.5">Toàn bộ <strong>${newInvoices.length}</strong> hóa đơn đều là mới và sẵn sàng ghi vào file Excel.</p>
+                </div>
+            `;
+        }
+    }
+
+    // Cập nhật text nút bấm theo radio
+    function updateConfirmButtonText() {
+        if (!btnConfirmText) return;
+        const selectedRadio = document.querySelector('input[name="modal-dup-option"]:checked');
+        const opt = selectedRadio ? selectedRadio.value : 'skip';
+
+        if (duplicates.length > 0) {
+            if (opt === 'skip') {
+                btnConfirmText.textContent = `Chỉ Thêm ${newInvoices.length} Hóa Đơn Mới Vào Excel`;
+            } else if (opt === 'replace') {
+                btnConfirmText.textContent = `Ghi Đè & Thêm ${validInvoices.length} Hóa Đơn Vào Excel`;
+            } else {
+                btnConfirmText.textContent = `Thêm Tất Cả ${validInvoices.length} Hóa Đơn Vào Excel`;
+            }
+        } else {
+            btnConfirmText.textContent = `Thêm ${validInvoices.length} Hóa Đơn Vào Excel`;
+        }
+    }
+
+    updateConfirmButtonText();
+
+    const radios = document.querySelectorAll('input[name="modal-dup-option"]');
+    radios.forEach(r => r.addEventListener('change', updateConfirmButtonText));
+
+    // 4. Bảng chi tiết hóa đơn trong modal
+    const tbody = document.getElementById('result-modal-table-body');
+    if (tbody) {
+        tbody.innerHTML = '';
+        if (validInvoices.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-slate-400 italic">Không có hóa đơn hợp lệ nào được bóc tách.</td></tr>`;
+        } else {
+            validInvoices.forEach((inv, idx) => {
+                const tt = inv.thong_tin_chung || {};
+                const nb = inv.nguoi_ban || {};
+                const toan = inv.tong_tien || {};
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-pink-50/50 transition-colors';
+
+                const statusBadge = inv.already_in_excel
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                         <i class="fa-solid fa-clone mr-1"></i>Đã có trong Excel
+                       </span>`
+                    : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                         <i class="fa-solid fa-circle-check mr-1"></i>Mới
+                       </span>`;
+
+                tr.innerHTML = `
+                    <td class="px-3 py-2.5 text-center text-slate-400 font-semibold">${idx + 1}</td>
+                    <td class="px-3 py-2.5 text-center">${statusBadge}</td>
+                    <td class="px-3 py-2.5 font-mono font-bold text-rose-600">${tt.so_hd || '---'}</td>
+                    <td class="px-3 py-2.5 font-mono text-pink-700 font-semibold">${tt.ky_hieu || '---'}</td>
+                    <td class="px-3 py-2.5 text-slate-600">${tt.ngay_lap || '---'}</td>
+                    <td class="px-4 py-2.5">
+                        <div class="font-bold text-slate-900 line-clamp-1 max-w-[200px]" title="${nb.ten || ''}">${nb.ten || '---'}</div>
+                    </td>
+                    <td class="px-3 py-2.5 font-mono text-slate-700">${nb.mst || '---'}</td>
+                    <td class="px-3 py-2.5 text-right font-mono font-extrabold text-slate-900">${formatCurrency(toan.tong_tien_thanh_toan)}</td>
+                    <td class="px-3 py-2.5 text-center">
+                        <button type="button" class="w-7 h-7 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-600 transition-colors cursor-pointer" onclick='openInvoiceModalByIndex(${idx})' title="Xem chi tiết hóa đơn">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    }
+
+    // 5. Nút xác nhận Thêm vào Excel
+    if (btnConfirm) {
+        btnConfirm.onclick = async () => {
+            const selectedRadio = document.querySelector('input[name="modal-dup-option"]:checked');
+            const opt = selectedRadio ? selectedRadio.value : 'skip';
+
+            let toSave = [];
+            let overwrite = false;
+
+            if (duplicates.length > 0) {
+                if (opt === 'skip') {
+                    toSave = newInvoices;
+                    overwrite = false;
+                } else if (opt === 'replace') {
+                    toSave = validInvoices;
+                    overwrite = true;
+                } else {
+                    toSave = validInvoices;
+                    overwrite = false;
+                }
+            } else {
+                toSave = validInvoices;
+                overwrite = false;
+            }
+
+            if (toSave.length === 0) {
+                showToast('Tất cả hóa đơn này đều đã có trong file Excel. Không có hóa đơn mới nào để thêm.', 'warning');
+                return;
+            }
+
+            btnConfirm.disabled = true;
+            btnConfirm.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sm"></i><span>Đang ghi vào Excel...</span>`;
+
+            try {
+                const res = await fetch('/api/save-to-excel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        invoices: toSave,
+                        overwrite: overwrite
+                    })
+                });
+                const resData = await res.json();
+
+                if (resData.success) {
+                    let msg = `Đã lưu thành công: +${resData.added} hóa đơn mới vào Excel!`;
+                    if (resData.updated > 0) msg += ` (${resData.updated} HĐ đã được ghi đè cập nhật)`;
+                    showToast(msg, 'success');
+
+                    // Đánh dấu các hóa đơn đã được lưu
+                    toSave.forEach(inv => inv.already_in_excel = true);
+
+                    // Đóng modal kết quả
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+
+                    // Tải lại dữ liệu Excel để cập nhật toàn bộ hệ thống
+                    loadAppStatus();
+                    loadExcelData();
+                    renderPreviewTable();
+                    renderItemsTable();
+                    updateBadges();
+                } else {
+                    showToast(resData.error || 'Có lỗi khi lưu vào file Excel', 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi kết nối: ' + err.message, 'error');
+            } finally {
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = `<i class="fa-solid fa-file-excel text-sm"></i><span id="btn-confirm-add-text">Thêm Dữ Liệu Đã Trích Xuất Vào Excel</span>`;
+            }
+        };
+    }
+
+    // Hiển thị modal
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+// Mở modal hóa đơn từ danh sách trong result modal
+window.openInvoiceModalByIndex = function(idx) {
+    if (state.lastExtractionData && state.lastExtractionData.invoices) {
+        const valid = state.lastExtractionData.invoices.filter(i => i.success);
+        if (valid[idx]) {
+            showInvoiceModal(valid[idx]);
+        }
+    }
+};
+
+// ==============================================================
+// 🌟 MODAL THÔNG TIN TÁC GIẢ & METADATA TRACKING BẢN QUYỀN
+// ==============================================================
+function initAboutModal() {
+    const btnOpen = document.getElementById('btn-open-about-modal');
+    const modal = document.getElementById('modal-about-metadata');
+    const btnClose = document.getElementById('btn-close-about-modal');
+    const btnAck = document.getElementById('btn-ack-about-modal');
+
+    if (btnOpen && modal) {
+        btnOpen.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        });
+    }
+
+    [btnClose, btnAck].forEach(btn => {
+        if (btn && modal) {
+            btn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            });
+        }
+    });
+
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        });
+    }
+}
+
 
 // Xử lý kết quả trả về từ parser
 function processParsedResults(newInvoices) {
@@ -658,6 +1089,9 @@ async function loadAppStatus() {
         const fileName = data.excel_path ? data.excel_path.split(/[\\/]/).pop() : 'danh_sach_hoa_don.xlsx';
         const fileBadge = document.getElementById('excel-file-badge');
         if (fileBadge) fileBadge.textContent = `${fileName}`;
+
+        const curBadge = document.getElementById('current-excel-badge');
+        if (curBadge) curBadge.textContent = `${fileName}`;
 
         const topbarName = document.getElementById('topbar-excel-name');
         if (topbarName) topbarName.textContent = fileName;

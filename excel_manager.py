@@ -126,6 +126,24 @@ DETAIL_HEADERS = [
     ("Tên file gốc", ALIGN_LEFT, "@")
 ]
 
+def set_workbook_metadata(wb):
+    """
+    Thiết lập metadata bản quyền và tác giả cho file Excel để phục vụ tracking & bảo vệ quyền tác giả.
+    Khi người dùng mở file properties hoặc kiểm tra tác giả trên Windows Explorer/Excel, sẽ thấy đầy đủ thông tin.
+    """
+    try:
+        props = wb.properties
+        props.creator = "Lê Minh Triết - MinhTrietEras"
+        props.lastModifiedBy = "MinhTrietEras (https://leminhtriet.com)"
+        props.title = "Sổ Lưu Trữ & Quản Lý Hóa Đơn Điện Tử - MinhTrietEras"
+        props.subject = "Báo cáo hóa đơn GTGT trích xuất tự động"
+        props.description = "Phần mềm Trích xuất hóa đơn tự động phát triển bởi Lê Minh Triết - MinhTrietEras. Website chính thức: https://leminhtriet.com. Mã tracking: MTE-TXHD-2026-VN."
+        props.keywords = "MinhTrietEras; Lê Minh Triết; leminhtriet.com; Trích xuất hóa đơn; Hóa đơn điện tử; Tracking; MTE-TXHD-2026-VN"
+        props.category = "Kế toán / Thuế / Quản lý Hóa Đơn"
+        props.company = "MinhTrietEras"
+    except Exception as e:
+        print(f"Warning: Lỗi ghi metadata Excel: {e}")
+
 def ensure_excel_file(filepath):
     """
     Kiểm tra và khởi tạo file Excel nếu chưa tồn tại với 3 sheets:
@@ -149,6 +167,7 @@ def ensure_excel_file(filepath):
                 _setup_sheet_headers(ws, DETAIL_HEADERS, HEADER_FILL_SUB)
             if "TongQuan" not in wb.sheetnames:
                 wb.create_sheet("TongQuan", 0)
+            set_workbook_metadata(wb)
             return wb
         except Exception:
             pass
@@ -166,6 +185,7 @@ def ensure_excel_file(filepath):
     ws_detail = wb.create_sheet("ChiTietHangHoa")
     _setup_sheet_headers(ws_detail, DETAIL_HEADERS, HEADER_FILL_SUB)
 
+    set_workbook_metadata(wb)
     wb.save(filepath)
     return wb
 
@@ -309,14 +329,22 @@ def refresh_tongquan_sheet(wb):
     unique_suppliers_count = len(suppliers_map)
 
     # 2. VẼ GIAO DIỆN SHEET 'TongQuan'
-    # 2.1 Tiêu đề lớn
+    # 2.1 Tiêu đề lớn & Subtitle Tác giả / Tracking
     ws_tq.merge_cells('A1:J1')
     title_cell = ws_tq['A1']
-    title_cell.value = "BÁO CÁO TỔNG QUAN HÓA ĐƠN ĐIỆN TỬ THEO TỪNG NHÀ CUNG CẤP & KỲ KÊ KHAI"
+    title_cell.value = "BÁO CÁO TỔNG QUAN HÓA ĐƠN ĐIỆN TỬ - MINHTRIETERAS (https://leminhtriet.com)"
     title_cell.font = TITLE_FONT
     title_cell.fill = HEADER_FILL_TITLE
     title_cell.alignment = Alignment(horizontal='center', vertical='center')
-    ws_tq.row_dimensions[1].height = 42
+    ws_tq.row_dimensions[1].height = 36
+
+    ws_tq.merge_cells('A2:J2')
+    sub_cell = ws_tq['A2']
+    sub_cell.value = "Hệ thống trích xuất & quản lý hóa đơn tự động | Bản quyền © 2026 Lê Minh Triết - MinhTrietEras | Website: https://leminhtriet.com | Tracking ID: MTE-TXHD-2026-VN"
+    sub_cell.font = Font(name="Segoe UI", size=9, italic=True, bold=True, color="831843")
+    sub_cell.fill = KPI_FILL
+    sub_cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws_tq.row_dimensions[2].height = 20
 
     # 2.2 Thẻ KPI tổng hợp (Row 3-4)
     ws_tq.row_dimensions[3].height = 20
@@ -693,6 +721,7 @@ def save_invoices_to_excel(invoices_list, filepath, overwrite=False):
     refresh_tongquan_sheet(wb)
 
     try:
+        set_workbook_metadata(wb)
         wb.save(filepath)
         wb.close()
     except PermissionError:
@@ -895,6 +924,7 @@ def init_blank_excel_file(filepath):
 
         refresh_tongquan_sheet(wb)
 
+        set_workbook_metadata(wb)
         wb.save(filepath)
         wb.close()
         return {
@@ -943,6 +973,7 @@ def clear_excel_data(filepath):
         # 3. Làm mới lại Sheet TongQuan
         refresh_tongquan_sheet(wb)
 
+        set_workbook_metadata(wb)
         wb.save(filepath)
         wb.close()
         return {

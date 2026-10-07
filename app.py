@@ -59,20 +59,41 @@ app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB cho phép upload n
 current_excel_path = config.DEFAULT_EXCEL_PATH
 ensure_excel_file(current_excel_path)
 
+@app.after_request
+def add_tracking_headers(response):
+    """Gắn metadata bản quyền, tác giả và tracking ID vào mọi HTTP Response"""
+    response.headers['X-Author'] = config.AUTHOR
+    response.headers['X-Organization'] = config.ORGANIZATION
+    response.headers['X-Website'] = config.WEBSITE
+    response.headers['X-App-Name'] = config.APP_NAME
+    response.headers['X-App-Version'] = config.APP_VERSION
+    response.headers['X-Tracking-ID'] = config.TRACKING_ID
+    response.headers['X-Powered-By'] = f"{config.ORGANIZATION} ({config.WEBSITE})"
+    return response
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/api/status', methods=['GET'])
 def get_status():
-    """Lấy trạng thái và thống kê file Excel hiện tại"""
+    """Lấy trạng thái, thống kê file Excel hiện tại và metadata bản quyền hệ thống"""
     global current_excel_path
     summary = read_excel_summary(current_excel_path)
     return jsonify({
         'excel_path': current_excel_path,
         'excel_exists': os.path.exists(current_excel_path),
         'stats': summary.get('stats', {}),
-        'file_size_kb': summary.get('file_size_kb', 0)
+        'file_size_kb': summary.get('file_size_kb', 0),
+        'metadata': {
+            'author': config.AUTHOR,
+            'organization': config.ORGANIZATION,
+            'website': config.WEBSITE,
+            'app_name': config.APP_NAME,
+            'version': config.APP_VERSION,
+            'copyright': config.COPYRIGHT,
+            'tracking_id': config.TRACKING_ID
+        }
     })
 
 @app.route('/api/upload', methods=['POST'])
@@ -165,12 +186,18 @@ def upload_files():
                     'error': f'Lỗi đọc file PDF: {str(e)}'
                 })
 
+    valid_invoices = [r for r in results if r.get('success')]
+    duplicate_count = len([r for r in valid_invoices if r.get('already_in_excel')])
+    new_count = len([r for r in valid_invoices if not r.get('already_in_excel')])
+
     return jsonify({
         'success': True,
         'invoices': results,
         'total': len(results),
-        'valid_count': len([r for r in results if r.get('success')]),
-        'error_count': error_count
+        'valid_count': len(valid_invoices),
+        'error_count': error_count,
+        'duplicate_count': duplicate_count,
+        'new_count': new_count
     })
 
 @app.route('/api/scan-folder', methods=['POST'])
@@ -204,9 +231,12 @@ def scan_folder_api():
         if inv.get('success'):
             inv['already_in_excel'] = inv.get('invoice_key') in existing_keys
 
+    valid_invoices = [inv for inv in invoices if inv.get('success')]
+    duplicate_count = len([inv for inv in valid_invoices if inv.get('already_in_excel')])
+    new_count = len([inv for inv in valid_invoices if not inv.get('already_in_excel')])
+
     save_info = None
     if auto_save and invoices:
-        valid_invoices = [inv for inv in invoices if inv.get('success')]
         if valid_invoices:
             save_info = save_invoices_to_excel(valid_invoices, current_excel_path, overwrite=overwrite)
             # Cập nhật trạng thái sau khi lưu
@@ -221,6 +251,8 @@ def scan_folder_api():
         'total_files': scan_res.get('total_files', 0),
         'valid_count': scan_res.get('valid_count', 0),
         'error_count': scan_res.get('error_count', 0),
+        'duplicate_count': duplicate_count,
+        'new_count': new_count,
         'supplier_folders': scan_res.get('supplier_folders', []),
         'invoices': invoices,
         'save_info': save_info,

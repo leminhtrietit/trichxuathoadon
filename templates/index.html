@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trích xuất hóa đơn</title>
+    <meta name="author" content="Lê Minh Triết - MinhTrietEras">
+    <meta name="creator" content="Lê Minh Triết">
+    <meta name="publisher" content="MinhTrietEras - https://leminhtriet.com">
+    <meta name="copyright" content="Copyright © 2026 Lê Minh Triết - MinhTrietEras. All rights reserved.">
+    <meta name="application-name" content="Trích xuất hóa đơn - MinhTrietEras">
+    <meta name="description" content="Phần mềm trích xuất hóa đơn điện tử XML & PDF sang Excel tự động, phân tích Pivot theo nhà cung cấp và tháng. Phát triển bởi Lê Minh Triết - MinhTrietEras. Website: https://leminhtriet.com">
+    <meta name="keywords" content="Trích xuất hóa đơn, hóa đơn điện tử, XML, PDF, Excel, Pivot Table, MinhTrietEras, Lê Minh Triết, leminhtriet.com, MTE-TXHD-2026-VN">
+    <meta property="og:title" content="Trích xuất hóa đơn - MinhTrietEras">
+    <meta property="og:site_name" content="MinhTrietEras">
+    <meta property="og:url" content="https://leminhtriet.com">
+    <meta property="og:description" content="Hệ thống trích xuất và quản lý hóa đơn điện tử thông minh phát triển bởi MinhTrietEras (Lê Minh Triết).">
+    <meta name="tracking-id" content="MTE-TXHD-2026-VN">
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -137,8 +149,11 @@
 
             <!-- Sidebar Bottom Footer: Powered by MinhTrietEras with logo -->
             <div class="px-4 py-3 border-t border-pink-100 bg-white flex items-center justify-between text-[11px] text-slate-500 shrink-0">
-                <span class="text-slate-400 font-medium">Trích xuất hóa đơn</span>
-                <a href="https://leminhtriet.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center space-x-1.5 text-slate-600 hover:text-pink-600 transition-colors group" title="Truy cập leminhtriet.com">
+                <button type="button" id="btn-open-about-modal" class="text-slate-400 hover:text-pink-600 transition-colors font-medium flex items-center space-x-1 cursor-pointer" title="Xem thông tin bản quyền & tác giả">
+                    <i class="fa-solid fa-circle-info text-[10px]"></i>
+                    <span>Trích xuất hóa đơn</span>
+                </button>
+                <a href="https://leminhtriet.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center space-x-1.5 text-slate-600 hover:text-pink-600 transition-colors group" title="Tác giả: Lê Minh Triết - MinhTrietEras (https://leminhtriet.com)">
                     <span class="text-[10px] text-slate-400">by</span>
                     <span class="font-semibold text-slate-800 group-hover:text-pink-600">MinhTrietEras</span>
                     <img src="/static/images/logo.png" alt="MinhTrietEras Logo" class="h-4 w-auto object-contain inline-block">
@@ -162,181 +177,137 @@
         <!-- Main Body -->
         <main class="p-8 flex-1">
 
-                <!-- Quét thư mục hóa đơn -->
-                <div class="bg-white rounded-3xl p-6 border border-pink-200/80 shadow-[0_4px_25px_rgba(244,63,94,0.03)] relative overflow-hidden">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-9 h-9 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center text-sm">
-                                <i class="fa-solid fa-folder-tree"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-extrabold text-sm text-slate-900">
-                                    Quét Thư Mục Hóa Đơn (XML & PDF)
-                                </h3>
-                                <p class="text-[11px] text-slate-400">Chọn thư mục trên máy để trích xuất tự động vào file Excel</p>
-                            </div>
-                        </div>
+            <!-- ========================================== -->
+            <!-- TAB 1: TRÍCH XUẤT HÓA ĐƠN                  -->
+            <!-- ========================================== -->
+            <div id="tab-upload" class="tab-pane space-y-6">
+
+                <!-- Header Tab: Tinh gọn & Hiển thị file đích -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-pink-100 gap-2">
+                    <div>
+                        <h2 class="text-base font-extrabold text-slate-900 tracking-tight flex items-center space-x-2">
+                            <span>Phương Thức Trích Xuất Hóa Đơn</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-100 text-pink-700">XML & PDF</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Chọn một trong hai phương thức trích xuất dữ liệu tự động vào file Excel</p>
                     </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-[11px] text-slate-400 font-medium">Sổ Excel đích:</span>
+                        <span id="current-excel-badge" class="px-3 py-1 bg-white border border-pink-200 text-pink-700 rounded-xl text-xs font-mono font-bold truncate max-w-xs shadow-sm">
+                            danh_sach_hoa_don.xlsx
+                        </span>
+                    </div>
+                </div>
 
-                    <!-- Input thư mục và nút chọn -->
-                    <div class="space-y-3.5">
-                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                            <div class="relative flex-1">
-                                <i class="fa-regular fa-folder-open absolute left-3.5 top-3 text-pink-500 text-sm"></i>
-                                <input type="text" id="input-folder-path" placeholder="Đường dẫn thư mục chứa hóa đơn..." value="C:\Users\minht\Downloads" class="w-full pl-10 pr-4 py-2.5 bg-pink-50/40 border border-pink-200 rounded-xl text-xs font-mono text-slate-800 focus:ring-2 focus:ring-pink-500 focus:outline-none transition-all placeholder:text-slate-400">
-                            </div>
-                            <button type="button" id="btn-browse-folder-native" class="px-4 py-2.5 bg-white hover:bg-pink-50 text-slate-700 border border-pink-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shrink-0 cursor-pointer shadow-sm hover:border-pink-300">
-                                <i class="fa-solid fa-folder-magnifying-glass text-pink-500"></i>
-                                <span>Chọn Thư Mục...</span>
-                            </button>
-                            <button type="button" id="btn-scan-folder" class="px-5 py-2.5 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl text-xs font-bold shadow-md shadow-pink-500/20 transition-all flex items-center justify-center space-x-1.5 shrink-0 cursor-pointer">
-                                <i class="fa-solid fa-bolt"></i>
-                                <span>Quét & Trích Xuất</span>
-                            </button>
-                        </div>
+                <!-- 2 CÁCH TRÍCH XUẤT TRÌNH BÀY THEO HÀNG NGANG GỌN GÀNG (2 COLUMNS GRID) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                        <!-- Tùy chọn kiểm tra trùng lặp & quét đệ quy -->
-                        <div class="p-3.5 bg-pink-50/40 rounded-xl border border-pink-100 flex flex-wrap items-center justify-between gap-3 text-xs">
-                            <div class="flex flex-wrap items-center gap-4">
-                                <span class="font-bold text-slate-700 text-xs">
-                                    Hóa đơn trùng:
+                    <!-- CÁCH 1: QUÉT THEO THƯ MỤC -->
+                    <div id="card-open-folder-modal" class="group bg-white hover:bg-gradient-to-br hover:from-white hover:to-pink-50/50 rounded-3xl p-6 border-2 border-pink-100 hover:border-pink-300 shadow-[0_4px_25px_rgba(244,63,94,0.04)] hover:shadow-xl hover:shadow-pink-500/10 transition-all duration-300 cursor-pointer flex flex-col justify-between relative overflow-hidden">
+                        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-pink-100/40 rounded-full group-hover:scale-125 transition-transform duration-500 pointer-events-none"></div>
+
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="w-13 h-13 rounded-2xl bg-gradient-to-tr from-pink-500 via-rose-500 to-pink-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-pink-500/25 group-hover:scale-105 transition-transform duration-300">
+                                    <i class="fa-solid fa-folder-tree"></i>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-pink-50 text-pink-700 border border-pink-100">
+                                    Nhiều thư mục NCC
                                 </span>
-                                <!-- Radio 1: Replace -->
-                                <label class="inline-flex items-center cursor-pointer select-none">
-                                    <input type="radio" name="duplicate-mode" value="replace" checked class="text-pink-600 focus:ring-pink-500 w-3.5 h-3.5 cursor-pointer accent-pink-600">
-                                    <span class="ml-1.5 font-medium text-slate-700">
-                                        Ghi đè (không thêm dòng)
-                                    </span>
-                                </label>
-                                <!-- Radio 2: Skip -->
-                                <label class="inline-flex items-center cursor-pointer select-none">
-                                    <input type="radio" name="duplicate-mode" value="skip" class="text-pink-600 focus:ring-pink-500 w-3.5 h-3.5 cursor-pointer accent-pink-600">
-                                    <span class="ml-1.5 font-medium text-slate-700">
-                                        Bỏ qua nếu đã có
-                                    </span>
-                                </label>
                             </div>
 
-                            <div class="flex items-center space-x-4">
-                                <label class="inline-flex items-center cursor-pointer select-none">
-                                    <input type="checkbox" id="chk-scan-recursive" checked class="rounded border-pink-300 text-pink-600 focus:ring-pink-500 w-3.5 h-3.5 cursor-pointer accent-pink-600">
-                                    <span class="ml-1.5 text-slate-700 font-medium">Quét cả thư mục con</span>
-                                </label>
-                                <label class="inline-flex items-center cursor-pointer select-none">
-                                    <input type="checkbox" id="chk-scan-auto-save" checked class="rounded border-pink-300 text-pink-600 focus:ring-pink-500 w-3.5 h-3.5 cursor-pointer accent-pink-600">
-                                    <span class="ml-1.5 text-pink-700 font-bold">Tự động ghi vào Excel</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Card kết quả quét thư mục (Ẩn khi chưa quét) -->
-                        <div id="scan-summary-card" class="hidden p-4 rounded-2xl bg-white border border-pink-200 shadow-sm animate-fade-in">
-                            <div class="flex items-center justify-between mb-3 pb-2.5 border-b border-pink-100">
-                                <div class="flex items-center space-x-2 text-xs font-bold text-slate-800">
-                                    <i class="fa-solid fa-circle-check text-emerald-500"></i>
-                                    <span>Kết Quả Quét:</span>
-                                    <span id="scan-folder-display" class="font-mono font-normal text-slate-500">...</span>
-                                </div>
-                                <span id="scan-status-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">Hoàn tất</span>
-                            </div>
-
-                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center text-xs mb-2">
-                                <div class="p-2 rounded-xl bg-slate-50 border border-slate-100">
-                                    <div class="text-[10px] uppercase font-bold text-slate-400">Tổng file</div>
-                                    <div id="scan-total-files" class="text-base font-black text-slate-800 mt-0.5">0</div>
-                                </div>
-                                <div class="p-2 rounded-xl bg-pink-50 border border-pink-100">
-                                    <div class="text-[10px] uppercase font-bold text-pink-600">Hợp lệ</div>
-                                    <div id="scan-valid-files" class="text-base font-black text-pink-700 mt-0.5">0</div>
-                                </div>
-                                <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-100">
-                                    <div class="text-[10px] uppercase font-bold text-emerald-600">Thêm mới</div>
-                                    <div id="scan-added-count" class="text-base font-black text-emerald-700 mt-0.5">0</div>
-                                </div>
-                                <div class="p-2 rounded-xl bg-blue-50 border border-blue-100">
-                                    <div class="text-[10px] uppercase font-bold text-blue-600">Ghi đè</div>
-                                    <div id="scan-updated-count" class="text-base font-black text-blue-700 mt-0.5">0</div>
-                                </div>
-                                <div class="p-2 rounded-xl bg-amber-50 border border-amber-100">
-                                    <div class="text-[10px] uppercase font-bold text-amber-600">Bỏ qua</div>
-                                    <div id="scan-skipped-count" class="text-base font-black text-amber-700 mt-0.5">0</div>
-                                </div>
-                            </div>
-
-                            <!-- Danh sách thư mục NCC phát hiện -->
-                            <div id="scan-supplier-folders-box" class="pt-2.5 border-t border-pink-100 hidden">
-                                <div class="text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                                    <span class="flex items-center">
-                                        <i class="fa-solid fa-folder-tree text-pink-500 mr-1.5"></i>
-                                        Thư mục nhà cung cấp:
-                                    </span>
-                                    <span id="scan-supplier-folders-count" class="text-[11px] font-semibold text-pink-600">0</span>
-                                </div>
-                                <div id="scan-supplier-folders-list" class="flex flex-wrap gap-1.5 text-xs">
-                                    <!-- Injected via JS -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TẢI LÊN FILE TRỰC TIẾP -->
-                <div class="bg-white rounded-3xl p-6 border border-pink-100 shadow-[0_4px_25px_rgba(244,63,94,0.03)]">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center space-x-2 text-xs font-bold text-slate-700">
-                            <i class="fa-solid fa-arrow-up-from-bracket text-pink-500"></i>
-                            <span>Tải Lên Tệp Trực Tiếp (XML, PDF, ZIP)</span>
-                        </div>
-                    </div>
-
-                    <div id="dropzone" class="border-2 border-dashed border-pink-200 rounded-2xl p-5 text-center hover:border-pink-500 hover:bg-pink-50/30 transition-all duration-300 cursor-pointer group bg-gradient-to-b from-white to-pink-50/20">
-                        <input type="file" id="file-input" multiple accept=".xml,.pdf,.zip" class="hidden">
-                        
-                        <div class="flex flex-col items-center">
-                            <div class="w-11 h-11 rounded-xl bg-pink-100 text-pink-600 group-hover:scale-105 flex items-center justify-center text-lg mb-2 shadow-sm transition-transform duration-300">
-                                <i class="fa-solid fa-file-arrow-up"></i>
-                            </div>
-                            <h4 class="text-xs font-bold text-slate-800 mb-0.5 group-hover:text-pink-600 transition-colors">
-                                Kéo & thả file hóa đơn XML, PDF hoặc file .ZIP vào đây
-                            </h4>
-                            <p class="text-[11px] text-slate-400 mb-2.5">
-                                Hoặc nhấp để chọn tệp từ máy tính
+                            <h3 class="text-base font-extrabold text-slate-900 group-hover:text-pink-600 transition-colors mb-2">
+                                Cách 1: Quét Theo Thư Mục
+                            </h3>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                                Quét toàn bộ hóa đơn XML & PDF trong thư mục trên máy. Hỗ trợ quét đệ quy tất cả các thư mục con theo từng Nhà cung cấp.
                             </p>
-                            <button type="button" id="btn-browse" class="px-3.5 py-1.5 bg-white hover:bg-pink-50 text-pink-700 border border-pink-200 text-xs font-semibold rounded-xl shadow-sm transition-all cursor-pointer">
-                                <i class="fa-regular fa-folder-open mr-1.5"></i> Chọn file từ máy
+
+                            <div class="p-3 bg-pink-50/50 rounded-2xl border border-pink-100 text-[11px] text-slate-600 space-y-1.5">
+                                <div class="flex items-center text-pink-900 font-semibold">
+                                    <i class="fa-solid fa-circle-check text-pink-500 mr-2 text-xs"></i> Tự động nhận diện thư mục Nhà cung cấp
+                                </div>
+                                <div class="flex items-center text-pink-900 font-semibold">
+                                    <i class="fa-solid fa-circle-check text-pink-500 mr-2 text-xs"></i> Tự đối chiếu và phát hiện trùng lặp
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-pink-100 flex items-center justify-between relative z-10">
+                            <span class="text-xs font-bold text-slate-700 group-hover:text-pink-600 transition-colors">Nhấp để mở hộp thoại quét</span>
+                            <button type="button" class="px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 group-hover:from-pink-600 group-hover:to-rose-600 text-white text-xs font-bold rounded-xl shadow-md shadow-pink-500/20 flex items-center space-x-1.5 pointer-events-none transition-all">
+                                <span>Quét Thư Mục</span>
+                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
                             </button>
                         </div>
                     </div>
 
-                    <div id="upload-actions" class="mt-4 pt-4 border-t border-pink-50 flex items-center justify-between hidden">
-                        <div class="text-xs text-slate-500">
-                            Đã bóc tách <span id="save-count-badge" class="font-bold text-pink-600">0</span> hóa đơn trong màn hình xem trước
+                    <!-- CÁCH 2: TẢI LÊN FILE TRỰC TIẾP -->
+                    <div id="card-open-upload-modal" class="group bg-white hover:bg-gradient-to-br hover:from-white hover:to-pink-50/50 rounded-3xl p-6 border-2 border-pink-100 hover:border-pink-300 shadow-[0_4px_25px_rgba(244,63,94,0.04)] hover:shadow-xl hover:shadow-pink-500/10 transition-all duration-300 cursor-pointer flex flex-col justify-between relative overflow-hidden">
+                        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-rose-100/40 rounded-full group-hover:scale-125 transition-transform duration-500 pointer-events-none"></div>
+
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="w-13 h-13 rounded-2xl bg-gradient-to-tr from-rose-500 via-pink-600 to-rose-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-rose-500/25 group-hover:scale-105 transition-transform duration-300">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-pink-50 text-pink-700 border border-pink-100">
+                                    Tải file lẻ & file ZIP
+                                </span>
+                            </div>
+
+                            <h3 class="text-base font-extrabold text-slate-900 group-hover:text-pink-600 transition-colors mb-2">
+                                Cách 2: Tải Lên Tệp Trực Tiếp
+                            </h3>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                                Kéo & thả hoặc duyệt chọn trực tiếp nhiều tệp hóa đơn XML, PDF hoặc file nén .ZIP từ máy tính để bóc tách ngay.
+                            </p>
+
+                            <div class="p-3 bg-pink-50/50 rounded-2xl border border-pink-100 text-[11px] text-slate-600 space-y-1.5">
+                                <div class="flex items-center text-pink-900 font-semibold">
+                                    <i class="fa-solid fa-circle-check text-pink-500 mr-2 text-xs"></i> Tự động giải nén file .ZIP hóa đơn
+                                </div>
+                                <div class="flex items-center text-pink-900 font-semibold">
+                                    <i class="fa-solid fa-circle-check text-pink-500 mr-2 text-xs"></i> Xem trước chi tiết trước khi ghi Excel
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <button id="btn-clear-preview" class="px-3.5 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-semibold transition-colors cursor-pointer">
-                                <i class="fa-solid fa-trash-can mr-1.5 text-slate-400"></i> Dọn dẹp
-                            </button>
-                            <button id="btn-save-to-excel" class="px-4 py-1.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl text-xs font-bold shadow-md shadow-pink-500/25 transition-all flex items-center cursor-pointer">
-                                <i class="fa-solid fa-floppy-disk mr-1.5"></i>
-                                <span>Ghi Vào File Excel</span>
+
+                        <div class="mt-6 pt-4 border-t border-pink-100 flex items-center justify-between relative z-10">
+                            <span class="text-xs font-bold text-slate-700 group-hover:text-pink-600 transition-colors">Nhấp để mở hộp thoại tải file</span>
+                            <button type="button" class="px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 group-hover:from-pink-600 group-hover:to-rose-600 text-white text-xs font-bold rounded-xl shadow-md shadow-pink-500/20 flex items-center space-x-1.5 pointer-events-none transition-all">
+                                <span>Tải Lên Tệp</span>
+                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
                             </button>
                         </div>
                     </div>
+
                 </div>
 
-                <!-- Preview Invoices Table -->
+                <!-- BẢNG XEM TRƯỚC HÓA ĐƠN TRONG PHIÊN LÀM VIỆC (NẾU CÓ) -->
                 <div id="preview-container" class="bg-white rounded-3xl border border-pink-100 shadow-[0_4px_25px_rgba(244,63,94,0.03)] overflow-hidden hidden">
                     <div class="px-7 py-5 border-b border-pink-50 flex items-center justify-between bg-gradient-to-r from-pink-50/40 via-white to-white">
                         <div class="flex items-center space-x-3">
                             <h3 class="font-bold text-slate-900 text-sm">Danh Sách Hóa Đơn Vừa Trích Xuất</h3>
                             <span id="preview-count" class="bg-pink-100 text-pink-700 text-xs px-3 py-0.5 rounded-full font-bold">0 hóa đơn</span>
                         </div>
-                        <div class="text-xs text-slate-400 flex items-center">
-                            <span>Nhấp <i class="fa-regular fa-eye text-pink-500 mx-1"></i> để xem bản thể hiện hóa đơn</span>
+                        <div class="flex items-center space-x-3">
+                            <button id="btn-reopen-result-modal" class="px-3.5 py-1.5 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-xl text-xs font-bold border border-pink-200 transition-colors cursor-pointer flex items-center space-x-1.5">
+                                <i class="fa-solid fa-chart-pie text-xs"></i>
+                                <span>Xem Popup Đối Chiếu & Lưu</span>
+                            </button>
+                            <button id="btn-clear-preview" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center space-x-1.5">
+                                <i class="fa-solid fa-trash-can text-slate-400"></i>
+                                <span>Dọn dẹp</span>
+                            </button>
+                            <button id="btn-save-to-excel" class="px-4 py-1.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl text-xs font-bold shadow-md shadow-pink-500/25 transition-all flex items-center cursor-pointer space-x-1.5">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Ghi Vào Excel</span>
+                            </button>
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto max-h-[600px]">
+                    <div class="overflow-x-auto max-h-[500px]">
                         <table class="min-w-full divide-y divide-pink-50 text-left text-xs">
                             <thead class="bg-pink-50/50 text-slate-600 uppercase font-bold text-[11px] tracking-wider sticky top-0 z-10 backdrop-blur-md">
                                 <tr>
@@ -361,6 +332,7 @@
                         </table>
                     </div>
                 </div>
+
             </div>
 
             <!-- ========================================== -->
@@ -990,6 +962,316 @@
                 <button type="button" id="btn-execute-clear" disabled class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-300 cursor-not-allowed transition-all flex items-center space-x-2">
                     <i class="fa-solid fa-trash-can"></i>
                     <span>Xác Nhận Xóa Vĩnh Viễn</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- ============================================================== -->
+    <!-- MODAL 1: QUÉT THƯ MỤC HÓA ĐƠN (XML & PDF)                        -->
+    <!-- ============================================================== -->
+    <div id="modal-folder-scan" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-pink-200 overflow-hidden my-auto animate-fade-in">
+            <!-- Header -->
+            <div class="px-6 py-4 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                        <i class="fa-solid fa-folder-tree text-sm"></i>
+                    </div>
+                    <h3 class="font-extrabold text-sm tracking-wide">Quét Hóa Đơn Theo Thư Mục</h3>
+                </div>
+                <button type="button" id="btn-close-folder-modal" class="w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 space-y-4 text-xs text-slate-700">
+                <p class="text-slate-600 leading-relaxed">
+                    Chọn thư mục trên máy tính của bạn. Hệ thống sẽ bóc tách tất cả file XML & PDF và phân nhóm theo từng Nhà cung cấp để đối chiếu với file Excel.
+                </p>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-800 mb-1.5">Đường dẫn thư mục chứa hóa đơn:</label>
+                    <div class="flex items-center gap-2">
+                        <div class="relative flex-1">
+                            <i class="fa-regular fa-folder-open absolute left-3.5 top-3 text-pink-500 text-sm"></i>
+                            <input type="text" id="input-folder-path" placeholder="C:\Users\minht\Downloads\INPUT" value="C:\Users\minht\Downloads" class="w-full pl-10 pr-4 py-2.5 bg-pink-50/40 border border-pink-200 rounded-xl text-xs font-mono text-slate-800 focus:ring-2 focus:ring-pink-500 focus:outline-none transition-all">
+                        </div>
+                        <button type="button" id="btn-browse-folder-native" class="px-4 py-2.5 bg-white hover:bg-pink-50 text-slate-700 border border-pink-200 rounded-xl text-xs font-bold transition-all flex items-center shrink-0 cursor-pointer shadow-sm hover:border-pink-300">
+                            <i class="fa-solid fa-folder-magnifying-glass text-pink-500 mr-1.5"></i>
+                            <span>Chọn Thư Mục...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tùy chọn quét -->
+                <div class="p-3.5 bg-pink-50/40 rounded-2xl border border-pink-100 space-y-2">
+                    <label class="inline-flex items-center cursor-pointer select-none">
+                        <input type="checkbox" id="chk-scan-recursive" checked class="rounded border-pink-300 text-pink-600 focus:ring-pink-500 w-4 h-4 cursor-pointer accent-pink-600">
+                        <span class="ml-2 text-slate-800 font-bold text-xs">Quét cả thư mục con (Subfolders)</span>
+                    </label>
+                    <p class="text-[11px] text-slate-500 pl-6">
+                        Khuyên dùng: Tự động gom hóa đơn nằm trong từng thư mục của các Nhà cung cấp khác nhau.
+                    </p>
+                </div>
+
+                <!-- Loading Spinner Status -->
+                <div id="folder-scan-loading" class="hidden p-4 bg-pink-50/80 rounded-2xl border border-pink-200 text-center space-y-2">
+                    <div class="inline-block animate-spin text-pink-600 text-2xl">
+                        <i class="fa-solid fa-circle-notch"></i>
+                    </div>
+                    <p class="font-bold text-pink-800 text-xs" id="folder-scan-loading-text">Đang quét và bóc tách hóa đơn trong thư mục...</p>
+                    <p class="text-[11px] text-slate-500">Vui lòng đợi giây lát trong khi hệ thống đọc các tệp XML & PDF.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3">
+                <button type="button" id="btn-cancel-folder-modal" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer">
+                    Hủy Bỏ
+                </button>
+                <button type="button" id="btn-scan-folder" class="px-5 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl text-xs font-bold shadow-md shadow-pink-500/20 transition-all flex items-center space-x-2 cursor-pointer">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Bắt Đầu Trích Xuất</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL 2: TẢI LÊN TỆP HÓA ĐƠN TRỰC TIẾP (XML, PDF, ZIP)           -->
+    <!-- ============================================================== -->
+    <div id="modal-file-upload" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-pink-200 overflow-hidden my-auto animate-fade-in">
+            <!-- Header -->
+            <div class="px-6 py-4 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                        <i class="fa-solid fa-cloud-arrow-up text-sm"></i>
+                    </div>
+                    <h3 class="font-extrabold text-sm tracking-wide">Tải Lên Tệp Hóa Đơn</h3>
+                </div>
+                <button type="button" id="btn-close-upload-modal" class="w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 space-y-4 text-xs text-slate-700">
+                <!-- Dropzone Area -->
+                <div id="modal-dropzone" class="border-2 border-dashed border-pink-300 rounded-2xl p-6 text-center hover:border-pink-500 hover:bg-pink-50/40 transition-all duration-300 cursor-pointer bg-gradient-to-b from-white to-pink-50/20 group">
+                    <input type="file" id="modal-file-input" multiple accept=".xml,.pdf,.zip" class="hidden">
+                    <div class="w-12 h-12 mx-auto rounded-2xl bg-pink-100 text-pink-600 group-hover:scale-110 flex items-center justify-center text-xl mb-3 shadow-sm transition-transform duration-300">
+                        <i class="fa-solid fa-file-arrow-up"></i>
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-800 mb-1 group-hover:text-pink-600 transition-colors">
+                        Kéo thả file XML, PDF hoặc file .ZIP vào đây
+                    </h4>
+                    <p class="text-[11px] text-slate-400 mb-3">
+                        Hỗ trợ chọn cùng lúc nhiều tệp hóa đơn hoặc file nén zip
+                    </p>
+                    <button type="button" id="btn-modal-browse-files" class="px-4 py-2 bg-white hover:bg-pink-50 text-pink-700 border border-pink-200 text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer">
+                        <i class="fa-regular fa-folder-open mr-1.5"></i> Chọn file từ máy tính
+                    </button>
+                </div>
+
+                <!-- Danh sách file đã chọn -->
+                <div id="modal-selected-files-box" class="hidden space-y-2">
+                    <div class="flex items-center justify-between text-xs font-bold text-slate-800">
+                        <span class="flex items-center">
+                            <i class="fa-solid fa-list-check text-pink-500 mr-1.5"></i>
+                            Đã chọn: <span id="modal-selected-files-count" class="text-pink-600 ml-1">0 file</span>
+                        </span>
+                        <button type="button" id="btn-clear-selected-files" class="text-[11px] text-slate-400 hover:text-red-500 cursor-pointer">
+                            Xóa hết
+                        </button>
+                    </div>
+                    <div id="modal-selected-files-list" class="max-h-36 overflow-y-auto space-y-1.5 pr-1">
+                        <!-- Danh sách file -->
+                    </div>
+                </div>
+
+                <!-- Loading Spinner Status -->
+                <div id="upload-scan-loading" class="hidden p-4 bg-pink-50/80 rounded-2xl border border-pink-200 text-center space-y-2">
+                    <div class="inline-block animate-spin text-pink-600 text-2xl">
+                        <i class="fa-solid fa-circle-notch"></i>
+                    </div>
+                    <p class="font-bold text-pink-800 text-xs" id="upload-scan-loading-text">Đang tải lên và bóc tách dữ liệu hóa đơn...</p>
+                    <p class="text-[11px] text-slate-500">Đang đọc thông tin và đối chiếu với file Excel hiện tại.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                <button type="button" id="btn-modal-load-sample" class="text-xs text-pink-600 hover:text-pink-800 font-semibold flex items-center cursor-pointer">
+                    <i class="fa-solid fa-flask mr-1"></i> Nạp file mẫu test
+                </button>
+                <div class="flex items-center space-x-3">
+                    <button type="button" id="btn-cancel-upload-modal" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer">
+                        Hủy Bỏ
+                    </button>
+                    <button type="button" id="btn-start-upload-process" disabled class="px-5 py-2.5 bg-slate-300 text-white rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-not-allowed">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>Bắt Đầu Trích Xuất</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL 3: POPUP XEM KẾT QUẢ TRÍCH XUẤT & ĐỐI CHIẾU TRÙNG LẶP      -->
+    <!-- ============================================================== -->
+    <div id="modal-extraction-result" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-5xl w-full border border-pink-200 overflow-hidden my-auto animate-fade-in flex flex-col max-h-[92vh]">
+            <!-- Header -->
+            <div class="px-6 py-4 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-file-circle-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-sm tracking-wide">Kết Quả Trích Xuất & Đối Chiếu Dữ Liệu</h3>
+                        <p class="text-[11px] text-pink-100">Đối chiếu trực tiếp với sổ Excel: <span id="result-modal-excel-name" class="font-mono font-bold underline">danh_sach_hoa_don.xlsx</span></p>
+                    </div>
+                </div>
+                <button type="button" id="btn-close-result-modal" class="w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Body (Scrollable) -->
+            <div class="p-6 space-y-4 text-xs text-slate-700 overflow-y-auto flex-1">
+                
+                <!-- 4 Thẻ KPI Kết Quả Nhanh -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <div class="text-[10px] uppercase font-bold text-slate-400">Tổng Trích Xuất</div>
+                        <div id="result-kpi-total" class="text-xl font-black text-slate-800 mt-0.5">0</div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-emerald-50 border border-emerald-200/80">
+                        <div class="text-[10px] uppercase font-bold text-emerald-600">Hóa Đơn Mới</div>
+                        <div id="result-kpi-new" class="text-xl font-black text-emerald-700 mt-0.5">0</div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-amber-50 border border-amber-200/80">
+                        <div class="text-[10px] uppercase font-bold text-amber-600">Đã Có Trong Excel</div>
+                        <div id="result-kpi-duplicate" class="text-xl font-black text-amber-700 mt-0.5">0</div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-rose-50 border border-rose-200/80">
+                        <div class="text-[10px] uppercase font-bold text-rose-600">File Đọc Lỗi</div>
+                        <div id="result-kpi-error" class="text-xl font-black text-rose-700 mt-0.5">0</div>
+                    </div>
+                </div>
+
+                <!-- KHUNG CẢNH BÁO TRÙNG LẶP & TÙY CHỌN XỬ LÝ -->
+                <div id="result-duplicate-banner" class="p-4 rounded-2xl border transition-all">
+                    <!-- Dynamic: Injected by JS (warning if duplicates exist, success if all new) -->
+                </div>
+
+                <!-- BẢNG DANH SÁCH CHI TIẾT HÓA ĐƠN TRÍCH XUẤT -->
+                <div class="border border-pink-100 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="px-4 py-2.5 bg-pink-50/60 border-b border-pink-100 flex items-center justify-between text-xs font-bold text-slate-800">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-table-list text-pink-600"></i>
+                            <span>Chi Tiết Từng Hóa Đơn Bóc Tách:</span>
+                        </div>
+                        <span class="text-[11px] text-slate-500 font-normal">Nhấp <i class="fa-regular fa-eye text-pink-500 mx-0.5"></i> để xem bản thể hiện</span>
+                    </div>
+
+                    <div class="overflow-x-auto max-h-72">
+                        <table class="min-w-full divide-y divide-pink-100 text-left text-xs">
+                            <thead class="bg-pink-50/40 text-slate-600 uppercase font-bold text-[10px] tracking-wider sticky top-0 z-10 backdrop-blur-md">
+                                <tr>
+                                    <th class="px-3 py-2.5 text-center w-8">STT</th>
+                                    <th class="px-3 py-2.5 text-center">Trạng thái</th>
+                                    <th class="px-3 py-2.5">Số HĐ</th>
+                                    <th class="px-3 py-2.5">Ký hiệu</th>
+                                    <th class="px-3 py-2.5">Ngày lập</th>
+                                    <th class="px-4 py-2.5">Đơn vị bán</th>
+                                    <th class="px-3 py-2.5">MST Bán</th>
+                                    <th class="px-3 py-2.5 text-right">Tổng thanh toán</th>
+                                    <th class="px-3 py-2.5 text-center w-12">Xem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="result-modal-table-body" class="divide-y divide-pink-50 text-xs font-medium">
+                                <!-- Injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer: Nút Thêm Dữ Liệu Đã Trích Xuất Vào Excel -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
+                <button type="button" id="btn-cancel-result-modal" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer">
+                    Đóng
+                </button>
+                <div class="flex items-center space-x-3">
+                    <button type="button" id="btn-confirm-add-to-excel" class="px-6 py-2.5 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl text-xs font-extrabold shadow-lg shadow-pink-500/25 transition-all flex items-center space-x-2 cursor-pointer transform hover:scale-[1.02]">
+                        <i class="fa-solid fa-file-excel text-sm"></i>
+                        <span id="btn-confirm-add-text">Thêm Dữ Liệu Đã Trích Xuất Vào Excel</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL 4: THÔNG TIN BẢN QUYỀN & TRACKING TÁC GIẢ                   -->
+    <!-- ============================================================== -->
+    <div id="modal-about-metadata" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-pink-200 overflow-hidden my-auto animate-fade-in">
+            <!-- Header -->
+            <div class="px-6 py-5 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white text-center relative">
+                <button type="button" id="btn-close-about-modal" class="absolute top-4 right-4 w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+                <div class="w-16 h-16 mx-auto rounded-3xl bg-white p-2 shadow-lg mb-3 flex items-center justify-center">
+                    <img src="/static/images/logo.png" alt="MinhTrietEras Logo" class="max-h-full max-w-full object-contain">
+                </div>
+                <h3 class="font-extrabold text-base tracking-wide">Trích Xuất Hóa Đơn Điện Tử</h3>
+                <p class="text-xs text-pink-100 mt-0.5">Phiên bản 2.0.0 (Desktop & Web App)</p>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 space-y-3.5 text-xs text-slate-700">
+                <div class="p-3.5 bg-pink-50/50 rounded-2xl border border-pink-100 space-y-2 font-medium">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500">Tác giả & Bản quyền:</span>
+                        <span class="font-bold text-slate-900">Lê Minh Triết</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500">Thương hiệu / Đơn vị:</span>
+                        <span class="font-bold text-pink-700">MinhTrietEras</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500">Website chính thức:</span>
+                        <a href="https://leminhtriet.com" target="_blank" rel="noopener noreferrer" class="font-bold text-pink-600 hover:underline">
+                            https://leminhtriet.com
+                        </a>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500">Mã Tracking ID:</span>
+                        <span class="font-mono font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-pink-200">MTE-TXHD-2026-VN</span>
+                    </div>
+                </div>
+
+                <div class="text-[11px] text-slate-500 leading-relaxed text-center">
+                    Phần mềm hỗ trợ tự động bóc tách hóa đơn điện tử XML, PDF theo chuẩn Nghị định 123/2020/NĐ-CP và Thông tư 78/2021/TT-BTC sang sổ Excel 3 sheet chuyên nghiệp.
+                </div>
+
+                <div class="pt-2 border-t border-slate-100 text-center">
+                    <p class="text-[10px] text-slate-400">
+                        Copyright © 2026 Lê Minh Triết - MinhTrietEras. All rights reserved.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 text-center">
+                <button type="button" id="btn-ack-about-modal" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl text-xs font-bold transition-all cursor-pointer">
+                    Đã Hiểu
                 </button>
             </div>
         </div>
