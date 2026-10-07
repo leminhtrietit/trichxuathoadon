@@ -26,6 +26,7 @@ if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
     except Exception:
         pass
 
+import json
 import zipfile
 import subprocess
 from datetime import datetime
@@ -56,7 +57,35 @@ else:
 
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB cho phép upload nhiều file
 
-current_excel_path = config.DEFAULT_EXCEL_PATH
+SETTINGS_FILE = os.path.join(config.DATA_DIR, 'app_settings.json')
+
+def load_user_settings():
+    """Đọc cấu hình người dùng (theme, đường dẫn excel) đã lưu"""
+    default_settings = {
+        'theme': 'rose',
+        'excel_path': config.DEFAULT_EXCEL_PATH
+    }
+    if os.path.exists(SETTINGS_FILE):
+        try:
+            with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+                saved = json.load(f)
+                if isinstance(saved, dict):
+                    default_settings.update(saved)
+        except Exception:
+            pass
+    return default_settings
+
+def save_user_settings(settings):
+    """Ghi cấu hình người dùng xuống đĩa để ghi nhớ vĩnh viễn"""
+    try:
+        with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception:
+        return False
+
+_initial_settings = load_user_settings()
+current_excel_path = _initial_settings.get('excel_path', config.DEFAULT_EXCEL_PATH)
 ensure_excel_file(current_excel_path)
 
 @app.after_request
@@ -80,9 +109,11 @@ def get_status():
     """Lấy trạng thái, thống kê file Excel hiện tại và metadata bản quyền hệ thống"""
     global current_excel_path
     summary = read_excel_summary(current_excel_path)
+    user_settings = load_user_settings()
     return jsonify({
         'excel_path': current_excel_path,
         'excel_exists': os.path.exists(current_excel_path),
+        'theme': user_settings.get('theme', 'rose'),
         'stats': summary.get('stats', {}),
         'file_size_kb': summary.get('file_size_kb', 0),
         'metadata': {
@@ -399,6 +430,9 @@ def update_config():
     try:
         ensure_excel_file(new_path)
         current_excel_path = new_path
+        settings = load_user_settings()
+        settings['excel_path'] = current_excel_path
+        save_user_settings(settings)
         summary = read_excel_summary(current_excel_path)
         return jsonify({
             'success': True,
@@ -463,6 +497,9 @@ def init_excel_file_api():
     res = init_blank_excel_file(new_path)
     if res.get('success'):
         current_excel_path = new_path
+        settings = load_user_settings()
+        settings['excel_path'] = current_excel_path
+        save_user_settings(settings)
         summary = read_excel_summary(current_excel_path)
         res['stats'] = summary.get('stats', {})
         res['excel_path'] = current_excel_path
@@ -470,6 +507,28 @@ def init_excel_file_api():
         return jsonify(res)
     else:
         return jsonify(res), 500
+
+@app.route('/api/settings', methods=['GET', 'POST'])
+def handle_settings():
+    """Lấy và cập nhật cấu hình người dùng (theme Material 3, excel_path)"""
+    global current_excel_path
+    if request.method == 'POST':
+        data = request.get_json() or {}
+        settings = load_user_settings()
+        if 'theme' in data:
+            theme_val = str(data['theme']).strip().lower()
+            valid_themes = ['rose', 'purple', 'blue', 'green', 'amber', 'teal', 'red', 'slate']
+            if theme_val in valid_themes:
+                settings['theme'] = theme_val
+        if 'excel_path' in data:
+            new_p = str(data['excel_path']).strip()
+            if new_p:
+                settings['excel_path'] = new_p
+                current_excel_path = new_p
+        save_user_settings(settings)
+        return jsonify({'success': True, 'settings': settings})
+    else:
+        return jsonify({'success': True, 'settings': load_user_settings()})
 
 @app.route('/api/clear-data', methods=['POST'])
 def clear_data_api():

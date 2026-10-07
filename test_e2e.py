@@ -74,6 +74,26 @@ def run_tests():
     assert 'supplier_folders' in scan_json, 'Missing supplier_folders in scan response'
     print(f'Test 4: Scan folder API OK. Found {scan_json["total_files"]} files, {len(scan_json["supplier_folders"])} folders')
 
+    # 5. Test Settings & Theme API (Material 3 Persistence)
+    res = client.get('/api/settings')
+    assert res.status_code == 200, 'GET /api/settings failed'
+    settings_data = res.get_json()
+    assert 'settings' in settings_data, 'Missing settings in response'
+
+    # Đổi sang theme tím Material 3
+    res = client.post('/api/settings', json={'theme': 'purple'})
+    assert res.status_code == 200, 'POST /api/settings failed'
+    updated = res.get_json()
+    assert updated['settings']['theme'] == 'purple', 'Theme not updated to purple'
+
+    # Kiểm tra status API phản ánh theme mới
+    res_status = client.get('/api/status')
+    assert res_status.get_json().get('theme') == 'purple', 'Status API did not reflect updated theme'
+
+    # Reset về theme rose mặc định
+    client.post('/api/settings', json={'theme': 'rose'})
+    print('Test 5: Settings & Material 3 Theme API OK')
+
     print('>>> ALL TESTS PASSED SUCCESSFULLY! <<<')
 
 if __name__ == '__main__':

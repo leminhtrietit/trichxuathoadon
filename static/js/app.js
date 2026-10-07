@@ -22,6 +22,7 @@ const state = {
 
 // Khởi chạy khi tài liệu sẵn sàng
 document.addEventListener('DOMContentLoaded', () => {
+    initThemeSystem();
     initTabs();
     initExtractionModals();
     initFolderScanner();
@@ -1101,6 +1102,10 @@ async function loadAppStatus() {
 
         const inputPath = document.getElementById('input-excel-path');
         if (inputPath) inputPath.value = data.excel_path;
+
+        if (data.theme && !localStorage.getItem('mte_theme')) {
+            applyTheme(data.theme, false);
+        }
     } catch (err) {
         console.error('Lỗi khi tải trạng thái:', err);
     }
@@ -1184,6 +1189,260 @@ function filterExcelTable(searchTerm) {
     });
 
     renderExcelTable(filtered);
+}
+
+// ==============================================================
+// 🌟 HỆ THỐNG TINH CHỈNH GIAO DIỆN & BỘ MÀU MATERIAL DESIGN 3 (GOOGLE M3)
+// ==============================================================
+const M3_THEMES = [
+    {
+        id: 'rose',
+        name: 'Hồng Thạch Anh',
+        subtitle: 'M3 Rose Quartz',
+        desc: 'Hiện đại, thanh lịch và ấm áp',
+        primaryHex: '#ec4899',
+        secondaryHex: '#f43f5e',
+        bgHex: '#fff5f7'
+    },
+    {
+        id: 'purple',
+        name: 'Tím Thạch Anh',
+        subtitle: 'M3 Amethyst (Baseline)',
+        desc: 'Bộ màu chuẩn gốc Google Material 3',
+        primaryHex: '#7c3aed',
+        secondaryHex: '#6750a4',
+        bgHex: '#faf5ff'
+    },
+    {
+        id: 'blue',
+        name: 'Xanh Dương',
+        subtitle: 'M3 Ocean Blue',
+        desc: 'Chuyên nghiệp, tin cậy và vững chắc',
+        primaryHex: '#2563eb',
+        secondaryHex: '#0284c7',
+        bgHex: '#f4f8fd'
+    },
+    {
+        id: 'green',
+        name: 'Xanh Lục Bảo',
+        subtitle: 'M3 Forest Emerald',
+        desc: 'Tươi mới, hài hòa và cân bằng sinh thái',
+        primaryHex: '#059669',
+        secondaryHex: '#0d9488',
+        bgHex: '#f3faf6'
+    },
+    {
+        id: 'amber',
+        name: 'Hổ Phách Hoàng Kim',
+        subtitle: 'M3 Sunset Amber',
+        desc: 'Ấm cúng, tràn đầy sinh khí & sáng tạo',
+        primaryHex: '#d97706',
+        secondaryHex: '#ea580c',
+        bgHex: '#fdfbf5'
+    },
+    {
+        id: 'teal',
+        name: 'Lam Ngọc Biển Sâu',
+        subtitle: 'M3 Ocean Teal',
+        desc: 'Dịu mát, sâu lắng và thanh thoát',
+        primaryHex: '#0d9488',
+        secondaryHex: '#0891b2',
+        bgHex: '#f2faf9'
+    },
+    {
+        id: 'red',
+        name: 'Đỏ Ruby & Đất Nung',
+        subtitle: 'M3 Ruby Carmine',
+        desc: 'Nhiệt huyết, nổi bật và quyết đoán',
+        primaryHex: '#e11d48',
+        secondaryHex: '#dc2626',
+        bgHex: '#fff5f5'
+    },
+    {
+        id: 'slate',
+        name: 'Than Đen Tối Giản',
+        subtitle: 'M3 Charcoal Slate',
+        desc: 'Tối giản, trang nhã và tập trung cao độ',
+        primaryHex: '#475569',
+        secondaryHex: '#334155',
+        bgHex: '#f8fafc'
+    }
+];
+
+function getCurrentThemeId() {
+    return document.documentElement.getAttribute('data-theme') || localStorage.getItem('mte_theme') || 'rose';
+}
+
+function applyTheme(themeId, notifyUser = false) {
+    const theme = M3_THEMES.find(t => t.id === themeId) || M3_THEMES[0];
+    const actualId = theme.id;
+
+    // 1. Áp dụng attribute trên <html> để kích hoạt toàn bộ CSS Variables
+    document.documentElement.setAttribute('data-theme', actualId);
+
+    // 2. Ghi nhớ vào localStorage của trình duyệt
+    try {
+        localStorage.setItem('mte_theme', actualId);
+    } catch (e) {}
+
+    // 3. Đồng bộ lưu vào file cấu hình backend qua API
+    fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ theme: actualId })
+    }).catch(() => {});
+
+    // 4. Cập nhật nhãn và chỉ báo ở Header
+    const quickIndicator = document.getElementById('quick-theme-indicator');
+    const quickLabel = document.getElementById('quick-theme-label');
+    if (quickIndicator) {
+        quickIndicator.style.background = `linear-gradient(135deg, ${theme.primaryHex}, ${theme.secondaryHex})`;
+    }
+    if (quickLabel) {
+        quickLabel.textContent = theme.name;
+    }
+
+    // 5. Cập nhật nhãn và swatch ở Tab Cài Đặt
+    const settingsBadgeText = document.getElementById('current-theme-name-text');
+    const settingsSwatch = document.getElementById('current-theme-swatch');
+    if (settingsBadgeText) {
+        settingsBadgeText.textContent = theme.name;
+    }
+    if (settingsSwatch) {
+        settingsSwatch.style.backgroundColor = theme.primaryHex;
+    }
+
+    // 6. Cập nhật trạng thái Active trên lưới thẻ Cài Đặt
+    const themeCards = document.querySelectorAll('.theme-card');
+    themeCards.forEach(card => {
+        const cId = card.getAttribute('data-theme-id');
+        const badge = card.querySelector('.theme-active-indicator');
+        if (cId === actualId) {
+            card.classList.add('active-theme-card');
+            card.classList.remove('border-pink-100');
+            if (badge) {
+                badge.classList.remove('hidden');
+                badge.classList.add('inline-flex');
+            }
+        } else {
+            card.classList.remove('active-theme-card');
+            card.classList.add('border-pink-100');
+            if (badge) {
+                badge.classList.add('hidden');
+                badge.classList.remove('inline-flex');
+            }
+        }
+    });
+
+    // 7. Cập nhật trạng thái Active trên menu nhanh Header
+    const quickItems = document.querySelectorAll('.quick-theme-item');
+    quickItems.forEach(item => {
+        const qId = item.getAttribute('data-theme-id');
+        if (qId === actualId) {
+            item.classList.add('bg-pink-100/80', 'text-pink-900', 'font-bold');
+            item.classList.remove('text-slate-600', 'hover:bg-pink-50');
+        } else {
+            item.classList.remove('bg-pink-100/80', 'text-pink-900', 'font-bold');
+            item.classList.add('text-slate-600', 'hover:bg-pink-50');
+        }
+    });
+
+    if (notifyUser) {
+        showToast(`Đã áp dụng bộ màu: <strong>${theme.name}</strong> (${theme.subtitle})`, 'info');
+    }
+}
+
+function initThemeSystem() {
+    const currentThemeId = getCurrentThemeId();
+
+    // 1. Khởi tạo danh sách thẻ chọn bộ màu trong Tab Cài Đặt
+    const container = document.getElementById('theme-cards-container');
+    if (container) {
+        container.innerHTML = M3_THEMES.map(theme => {
+            const isActive = theme.id === currentThemeId;
+            return `
+                <div class="theme-card relative p-4 rounded-2xl border-2 ${isActive ? 'active-theme-card' : 'border-pink-100 bg-white'} hover:border-pink-300 transition-all cursor-pointer flex flex-col justify-between group" data-theme-id="${theme.id}">
+                    <div>
+                        <!-- Bảng màu preview (3 chấm màu tròn: Primary, Secondary, Background) -->
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-1.5 p-1 bg-slate-50 rounded-xl border border-slate-100 shadow-inner">
+                                <span class="w-4 h-4 rounded-full shadow-sm" style="background-color: ${theme.primaryHex};" title="Primary Seed: ${theme.primaryHex}"></span>
+                                <span class="w-4 h-4 rounded-full shadow-sm" style="background-color: ${theme.secondaryHex};" title="Secondary / Accent: ${theme.secondaryHex}"></span>
+                                <span class="w-4 h-4 rounded-full border border-slate-200 shadow-sm" style="background-color: ${theme.bgHex};" title="Surface: ${theme.bgHex}"></span>
+                            </div>
+                            <span class="theme-active-indicator ${isActive ? 'inline-flex' : 'hidden'} items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-pink-700 shadow-sm border border-pink-200">
+                                <i class="fa-solid fa-check text-[9px] mr-1 text-emerald-600"></i> Đang dùng
+                            </span>
+                        </div>
+
+                        <!-- Tên bộ màu & Subtitle -->
+                        <h4 class="text-xs font-bold text-slate-900 group-hover:text-pink-600 transition-colors flex items-center justify-between">
+                            <span>${theme.name}</span>
+                        </h4>
+                        <p class="text-[10px] font-semibold text-pink-600/80 mt-0.5">${theme.subtitle}</p>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2">${theme.desc}</p>
+                    </div>
+
+                    <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                        <span class="text-[10px] font-mono text-slate-400 font-semibold">${theme.primaryHex.toUpperCase()}</span>
+                        <span class="text-[10px] font-bold text-slate-600 group-hover:text-pink-600 transition-colors">
+                            Áp dụng <i class="fa-solid fa-arrow-right text-[9px] ml-0.5"></i>
+                        </span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Bắt sự kiện click vào từng card
+        container.querySelectorAll('.theme-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const tId = card.getAttribute('data-theme-id');
+                applyTheme(tId, true);
+            });
+        });
+    }
+
+    // 2. Khởi tạo Menu nhanh trong Header
+    const quickMenuContainer = document.getElementById('quick-theme-items-container');
+    const quickToggleBtn = document.getElementById('btn-quick-theme-toggle');
+    const quickDropdown = document.getElementById('quick-theme-dropdown');
+
+    if (quickMenuContainer) {
+        quickMenuContainer.innerHTML = M3_THEMES.map(theme => {
+            const isActive = theme.id === currentThemeId;
+            return `
+                <button type="button" class="quick-theme-item flex items-center space-x-2 px-2.5 py-1.5 rounded-xl text-xs transition-colors cursor-pointer text-left ${isActive ? 'bg-pink-100/80 text-pink-900 font-bold' : 'text-slate-600 hover:bg-pink-50'}" data-theme-id="${theme.id}">
+                    <span class="w-3 h-3 rounded-full shrink-0 shadow-sm" style="background-color: ${theme.primaryHex};"></span>
+                    <span class="truncate text-[11px]">${theme.name}</span>
+                </button>
+            `;
+        }).join('');
+
+        quickMenuContainer.querySelectorAll('.quick-theme-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const tId = item.getAttribute('data-theme-id');
+                applyTheme(tId, true);
+                if (quickDropdown) quickDropdown.classList.add('hidden');
+            });
+        });
+    }
+
+    if (quickToggleBtn && quickDropdown) {
+        quickToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            quickDropdown.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!quickDropdown.contains(e.target) && !quickToggleBtn.contains(e.target)) {
+                quickDropdown.classList.add('hidden');
+            }
+        });
+    }
+
+    // 3. Áp dụng theme ban đầu
+    applyTheme(currentThemeId, false);
 }
 
 // Cấu hình cài đặt & khởi tạo file Excel

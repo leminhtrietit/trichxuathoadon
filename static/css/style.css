@@ -1,25 +1,271 @@
-/* style.css - Giao diện hiện đại phong cách Tone Hồng (Pink / Rose Modern Aesthetic) */
+/* style.css - Hệ thống Giao diện & Bộ Màu Material Design 3 (Material You)
+   Hỗ trợ 8 bảng màu chuẩn Google M3, ghi nhớ thiết lập theo người dùng */
+
+:root, [data-theme="rose"] {
+    --m3-surface-bg: #fff5f7;
+    --m3-gradient-start: #ec4899;
+    --m3-gradient-end: #f43f5e;
+    --m3-primary-glow: rgba(244, 63, 94, 0.35);
+    /* Primary: M3 Rose Quartz */
+    --m3-primary-50: 253 242 248;
+    --m3-primary-100: 252 231 243;
+    --m3-primary-200: 251 207 232;
+    --m3-primary-300: 249 168 212;
+    --m3-primary-400: 244 114 182;
+    --m3-primary-500: 236 72 153;
+    --m3-primary-600: 219 39 119;
+    --m3-primary-700: 190 24 93;
+    --m3-primary-800: 157 23 77;
+    --m3-primary-900: 131 24 67;
+    /* Secondary / Accent */
+    --m3-secondary-50: 255 241 242;
+    --m3-secondary-100: 255 228 230;
+    --m3-secondary-200: 254 205 211;
+    --m3-secondary-300: 253 164 175;
+    --m3-secondary-400: 251 113 133;
+    --m3-secondary-500: 244 63 94;
+    --m3-secondary-600: 225 29 72;
+    --m3-secondary-700: 190 18 60;
+    --m3-secondary-800: 159 18 57;
+    --m3-secondary-900: 136 19 55;
+}
+
+[data-theme="purple"] {
+    --m3-surface-bg: #faf5ff;
+    --m3-gradient-start: #7c3aed;
+    --m3-gradient-end: #6750a4;
+    --m3-primary-glow: rgba(124, 58, 237, 0.35);
+    /* Primary: M3 Amethyst Purple Baseline */
+    --m3-primary-50: 250 245 255;
+    --m3-primary-100: 243 232 255;
+    --m3-primary-200: 233 213 255;
+    --m3-primary-300: 216 180 254;
+    --m3-primary-400: 192 132 252;
+    --m3-primary-500: 168 85 247;
+    --m3-primary-600: 124 58 237;
+    --m3-primary-700: 103 80 164;
+    --m3-primary-800: 88 28 135;
+    --m3-primary-900: 59 7 100;
+    /* Secondary / Accent */
+    --m3-secondary-50: 245 243 255;
+    --m3-secondary-100: 237 233 254;
+    --m3-secondary-200: 221 214 254;
+    --m3-secondary-300: 196 181 253;
+    --m3-secondary-400: 167 139 250;
+    --m3-secondary-500: 139 92 246;
+    --m3-secondary-600: 109 40 217;
+    --m3-secondary-700: 91 33 182;
+    --m3-secondary-800: 76 29 149;
+    --m3-secondary-900: 46 16 101;
+}
+
+[data-theme="blue"] {
+    --m3-surface-bg: #f4f8fd;
+    --m3-gradient-start: #2563eb;
+    --m3-gradient-end: #0284c7;
+    --m3-primary-glow: rgba(37, 99, 235, 0.35);
+    /* Primary: M3 Ocean Blue */
+    --m3-primary-50: 239 246 255;
+    --m3-primary-100: 219 234 254;
+    --m3-primary-200: 191 219 254;
+    --m3-primary-300: 147 197 253;
+    --m3-primary-400: 96 165 250;
+    --m3-primary-500: 59 130 246;
+    --m3-primary-600: 37 99 235;
+    --m3-primary-700: 29 78 216;
+    --m3-primary-800: 30 64 175;
+    --m3-primary-900: 23 37 84;
+    /* Secondary / Accent */
+    --m3-secondary-50: 240 249 255;
+    --m3-secondary-100: 224 242 254;
+    --m3-secondary-200: 186 230 253;
+    --m3-secondary-300: 125 211 252;
+    --m3-secondary-400: 56 189 248;
+    --m3-secondary-500: 14 165 233;
+    --m3-secondary-600: 2 132 199;
+    --m3-secondary-700: 3 105 161;
+    --m3-secondary-800: 7 89 133;
+    --m3-secondary-900: 12 74 110;
+}
+
+[data-theme="green"] {
+    --m3-surface-bg: #f3faf6;
+    --m3-gradient-start: #059669;
+    --m3-gradient-end: #0d9488;
+    --m3-primary-glow: rgba(5, 150, 105, 0.35);
+    /* Primary: M3 Forest Emerald */
+    --m3-primary-50: 236 253 245;
+    --m3-primary-100: 209 250 229;
+    --m3-primary-200: 167 243 208;
+    --m3-primary-300: 110 231 183;
+    --m3-primary-400: 52 211 153;
+    --m3-primary-500: 16 185 129;
+    --m3-primary-600: 5 150 105;
+    --m3-primary-700: 4 120 87;
+    --m3-primary-800: 6 95 70;
+    --m3-primary-900: 2 44 34;
+    /* Secondary / Accent */
+    --m3-secondary-50: 240 253 250;
+    --m3-secondary-100: 204 251 241;
+    --m3-secondary-200: 153 246 228;
+    --m3-secondary-300: 94 234 212;
+    --m3-secondary-400: 45 212 191;
+    --m3-secondary-500: 20 184 166;
+    --m3-secondary-600: 13 148 136;
+    --m3-secondary-700: 15 118 110;
+    --m3-secondary-800: 17 94 89;
+    --m3-secondary-900: 4 47 46;
+}
+
+[data-theme="amber"] {
+    --m3-surface-bg: #fdfbf5;
+    --m3-gradient-start: #d97706;
+    --m3-gradient-end: #ea580c;
+    --m3-primary-glow: rgba(217, 119, 6, 0.35);
+    /* Primary: M3 Sunset Amber */
+    --m3-primary-50: 255 251 235;
+    --m3-primary-100: 254 243 199;
+    --m3-primary-200: 253 230 138;
+    --m3-primary-300: 252 211 77;
+    --m3-primary-400: 251 191 36;
+    --m3-primary-500: 245 158 11;
+    --m3-primary-600: 217 119 6;
+    --m3-primary-700: 180 83 9;
+    --m3-primary-800: 146 64 14;
+    --m3-primary-900: 69 26 3;
+    /* Secondary / Accent */
+    --m3-secondary-50: 255 247 237;
+    --m3-secondary-100: 255 237 213;
+    --m3-secondary-200: 254 215 170;
+    --m3-secondary-300: 253 186 116;
+    --m3-secondary-400: 251 146 60;
+    --m3-secondary-500: 249 115 22;
+    --m3-secondary-600: 234 88 12;
+    --m3-secondary-700: 194 65 12;
+    --m3-secondary-800: 154 52 18;
+    --m3-secondary-900: 67 20 7;
+}
+
+[data-theme="teal"] {
+    --m3-surface-bg: #f2faf9;
+    --m3-gradient-start: #0d9488;
+    --m3-gradient-end: #0891b2;
+    --m3-primary-glow: rgba(13, 148, 136, 0.35);
+    /* Primary: M3 Ocean Teal */
+    --m3-primary-50: 240 253 250;
+    --m3-primary-100: 204 251 241;
+    --m3-primary-200: 153 246 228;
+    --m3-primary-300: 94 234 212;
+    --m3-primary-400: 45 212 191;
+    --m3-primary-500: 20 184 166;
+    --m3-primary-600: 13 148 136;
+    --m3-primary-700: 15 118 110;
+    --m3-primary-800: 17 94 89;
+    --m3-primary-900: 4 47 46;
+    /* Secondary / Accent */
+    --m3-secondary-50: 236 254 255;
+    --m3-secondary-100: 207 250 254;
+    --m3-secondary-200: 165 243 252;
+    --m3-secondary-300: 103 232 249;
+    --m3-secondary-400: 34 211 238;
+    --m3-secondary-500: 6 182 212;
+    --m3-secondary-600: 8 145 178;
+    --m3-secondary-700: 14 116 144;
+    --m3-secondary-800: 21 94 117;
+    --m3-secondary-900: 8 51 68;
+}
+
+[data-theme="red"] {
+    --m3-surface-bg: #fff5f5;
+    --m3-gradient-start: #e11d48;
+    --m3-gradient-end: #dc2626;
+    --m3-primary-glow: rgba(225, 29, 72, 0.35);
+    /* Primary: M3 Ruby Carmine */
+    --m3-primary-50: 254 242 242;
+    --m3-primary-100: 254 226 226;
+    --m3-primary-200: 254 202 202;
+    --m3-primary-300: 252 165 165;
+    --m3-primary-400: 248 113 113;
+    --m3-primary-500: 239 68 68;
+    --m3-primary-600: 220 38 38;
+    --m3-primary-700: 185 28 28;
+    --m3-primary-800: 153 27 27;
+    --m3-primary-900: 69 10 10;
+    /* Secondary / Accent */
+    --m3-secondary-50: 255 241 242;
+    --m3-secondary-100: 255 228 230;
+    --m3-secondary-200: 254 205 211;
+    --m3-secondary-300: 253 164 175;
+    --m3-secondary-400: 251 113 133;
+    --m3-secondary-500: 244 63 94;
+    --m3-secondary-600: 225 29 72;
+    --m3-secondary-700: 190 18 60;
+    --m3-secondary-800: 159 18 57;
+    --m3-secondary-900: 136 19 55;
+}
+
+[data-theme="slate"] {
+    --m3-surface-bg: #f8fafc;
+    --m3-gradient-start: #475569;
+    --m3-gradient-end: #334155;
+    --m3-primary-glow: rgba(71, 85, 105, 0.35);
+    /* Primary: M3 Charcoal Slate */
+    --m3-primary-50: 248 250 252;
+    --m3-primary-100: 241 245 249;
+    --m3-primary-200: 226 232 240;
+    --m3-primary-300: 203 213 225;
+    --m3-primary-400: 148 163 184;
+    --m3-primary-500: 100 116 139;
+    --m3-primary-600: 71 85 105;
+    --m3-primary-700: 51 65 85;
+    --m3-primary-800: 30 41 59;
+    --m3-primary-900: 15 23 42;
+    /* Secondary / Accent */
+    --m3-secondary-50: 250 250 250;
+    --m3-secondary-100: 244 244 245;
+    --m3-secondary-200: 228 228 231;
+    --m3-secondary-300: 212 212 216;
+    --m3-secondary-400: 161 161 170;
+    --m3-secondary-500: 113 113 122;
+    --m3-secondary-600: 82 82 91;
+    --m3-secondary-700: 63 63 70;
+    --m3-secondary-800: 39 39 42;
+    --m3-secondary-900: 24 24 27;
+}
+
+/* Áp dụng màu nền bề mặt chuẩn Material 3 */
+.theme-surface-bg {
+    background-color: var(--m3-surface-bg) !important;
+}
 
 /* Active tab style cho Sidebar dọc bên trái */
 .nav-tab.active-tab {
-    background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%) !important;
+    background: linear-gradient(135deg, rgb(var(--m3-primary-600)) 0%, rgb(var(--m3-secondary-600)) 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 8px 24px -4px rgba(244, 63, 94, 0.35) !important;
+    box-shadow: 0 8px 24px -4px var(--m3-primary-glow) !important;
     border-radius: 1rem !important;
 }
 
-.nav-tab.active-tab div.w-8 {
+.nav-tab.active-tab div.w-7 {
     background-color: rgba(255, 255, 255, 0.2) !important;
     color: #ffffff !important;
 }
 
 .nav-tab.active-tab span#badge-upload-count {
     background-color: #ffffff !important;
-    color: #ec4899 !important;
+    color: rgb(var(--m3-primary-600)) !important;
 }
 
 .nav-tab.active-tab i {
     color: #ffffff !important;
+}
+
+/* Chuyển động chuyển màu mượt mà khi đổi theme */
+body, aside, header, main, .nav-tab, .bg-white, .rounded-3xl, .rounded-2xl {
+    transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.2s ease,
+                box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Hiệu ứng chuyển động mượt mà */
@@ -38,20 +284,34 @@
     animation: modernFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Tùy chỉnh thanh cuộn màu hồng nhạt tinh tế */
+/* Tùy chỉnh thanh cuộn theo màu Material 3 */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: #fff5f7;
+    background: var(--m3-surface-bg);
 }
 ::-webkit-scrollbar-thumb {
-    background: #fbcfe8;
+    background: rgb(var(--m3-primary-200));
     border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #f472b6;
+    background: rgb(var(--m3-primary-400));
+}
+
+/* Thẻ theme card trong cài đặt */
+.theme-card {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+.theme-card:hover {
+    transform: translateY(-2px);
+}
+.theme-card.active-theme-card {
+    border-color: rgb(var(--m3-primary-600)) !important;
+    background-color: rgb(var(--m3-primary-50) / 0.7) !important;
+    box-shadow: 0 10px 25px -5px var(--m3-primary-glow) !important;
 }
 
 /* Định dạng in bản thể hiện hóa đơn */
