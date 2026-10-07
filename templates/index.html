@@ -18,10 +18,7 @@
     <meta name="tracking-id" content="MTE-TXHD-2026-VN">
     <link rel="icon" type="image/png" href="/static/images/logo.png">
     <link rel="shortcut icon" href="/static/images/logo.png">
-    <!-- Google Fonts: Plus Jakarta Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/startup.css">
     <!-- Kích hoạt bộ màu Material 3 tức thì (chống giật FOUC) -->
     <script>
         (function() {
@@ -31,50 +28,19 @@
             } catch (e) {}
         })();
     </script>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        pink: {
-                            50: 'rgb(var(--m3-primary-50) / <alpha-value>)',
-                            100: 'rgb(var(--m3-primary-100) / <alpha-value>)',
-                            200: 'rgb(var(--m3-primary-200) / <alpha-value>)',
-                            300: 'rgb(var(--m3-primary-300) / <alpha-value>)',
-                            400: 'rgb(var(--m3-primary-400) / <alpha-value>)',
-                            500: 'rgb(var(--m3-primary-500) / <alpha-value>)',
-                            600: 'rgb(var(--m3-primary-600) / <alpha-value>)',
-                            700: 'rgb(var(--m3-primary-700) / <alpha-value>)',
-                            800: 'rgb(var(--m3-primary-800) / <alpha-value>)',
-                            900: 'rgb(var(--m3-primary-900) / <alpha-value>)',
-                        },
-                        rose: {
-                            50: 'rgb(var(--m3-secondary-50) / <alpha-value>)',
-                            100: 'rgb(var(--m3-secondary-100) / <alpha-value>)',
-                            200: 'rgb(var(--m3-secondary-200) / <alpha-value>)',
-                            300: 'rgb(var(--m3-secondary-300) / <alpha-value>)',
-                            400: 'rgb(var(--m3-secondary-400) / <alpha-value>)',
-                            500: 'rgb(var(--m3-secondary-500) / <alpha-value>)',
-                            600: 'rgb(var(--m3-secondary-600) / <alpha-value>)',
-                            700: 'rgb(var(--m3-secondary-700) / <alpha-value>)',
-                            800: 'rgb(var(--m3-secondary-800) / <alpha-value>)',
-                            900: 'rgb(var(--m3-secondary-900) / <alpha-value>)',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="/static/css/tailwind.css">
     <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body class="theme-surface-bg text-slate-800 h-screen w-screen overflow-hidden antialiased flex selection:bg-pink-200 selection:text-pink-900">
+    {% include 'startup.html' %}
+    <script>
+        window.startupFallback = setTimeout(function () {
+            var screen = document.getElementById('startup-screen');
+            if (screen) screen.remove();
+        }, 15000);
+    </script>
 
     <!-- SIDEBAR DỌC BÊN TRÁI (Fit vừa màn hình h-screen, không giãn theo content) -->
     <aside class="w-64 md:w-72 h-screen max-h-screen bg-white/95 backdrop-blur-xl border-r border-pink-100 flex flex-col justify-between shrink-0 z-40 shadow-sm overflow-y-auto">
@@ -164,8 +130,8 @@
                     <button type="button" id="btn-open-about-modal" class="text-slate-400 hover:text-pink-600 transition-colors font-medium flex items-center cursor-pointer p-1 rounded-lg hover:bg-pink-50" title="Xem thông tin bản quyền & tác giả">
                         <i class="fa-solid fa-circle-info text-[12px]"></i>
                     </button>
-                    <button type="button" id="btn-sidebar-check-update" class="relative inline-flex items-center px-1.5 py-0.5 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 font-mono text-[10px] font-bold transition-all cursor-pointer border border-pink-200/60" title="Phiên bản v2.0.0 - Bấm để kiểm tra cập nhật mới">
-                        <span>v2.0.0</span>
+                    <button type="button" id="btn-sidebar-check-update" class="relative inline-flex items-center px-1.5 py-0.5 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 font-mono text-[10px] font-bold transition-all cursor-pointer border border-pink-200/60" title="Phiên bản v{{ app_version }} - Bấm để kiểm tra cập nhật mới">
+                        <span>v{{ app_version }}</span>
                         <span id="sidebar-update-dot" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white animate-pulse"></span>
                     </button>
                 </div>
@@ -813,7 +779,7 @@
                             <div>
                                 <div class="flex items-center space-x-2">
                                     <h3 class="font-extrabold text-slate-900 text-sm md:text-base">Phiên Bản & Kiểm Tra Cập Nhật</h3>
-                                    <span id="settings-app-version-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-pink-100 text-pink-700 font-mono">v2.0.0</span>
+                                    <span id="settings-app-version-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-pink-100 text-pink-700 font-mono">v{{ app_version }}</span>
                                     <span id="settings-update-badge" class="hidden px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white animate-pulse">CÓ BẢN MỚI</span>
                                 </div>
                                 <p class="text-xs text-slate-500 mt-0.5">Ứng dụng tự động đối chiếu phiên bản với GitHub Releases công khai để bạn luôn sở hữu tính năng và bản sửa lỗi mới nhất.</p>
@@ -833,7 +799,7 @@
                             <div class="text-slate-400 text-[11px] font-semibold mb-1">Phiên Bản Đang Dùng</div>
                             <div class="text-slate-800 font-bold font-mono text-sm flex items-center space-x-1.5">
                                 <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
-                                <span id="settings-current-ver-display">v2.0.0</span>
+                                <span id="settings-current-ver-display">v{{ app_version }}</span>
                             </div>
                         </div>
                         <div class="p-3.5 bg-pink-50/40 rounded-2xl border border-pink-100 text-xs">
@@ -1351,7 +1317,7 @@
                     <img src="/static/images/logo.png" alt="MinhTrietEras Logo" class="max-h-full max-w-full object-contain">
                 </div>
                 <h3 class="font-extrabold text-base tracking-wide">Trích Xuất Hóa Đơn Điện Tử</h3>
-                <p class="text-xs text-pink-100 mt-0.5">Phiên bản 2.0.0 (Desktop & Web App)</p>
+                <p class="text-xs text-pink-100 mt-0.5">Phiên bản {{ app_version }} (Desktop & Web App)</p>
             </div>
 
             <!-- Body -->
@@ -1429,7 +1395,7 @@
                         <div class="text-[11px] text-slate-400 font-medium">Bản hiện tại trên máy:</div>
                         <div class="font-mono font-bold text-slate-700 text-xs mt-0.5 flex items-center space-x-1.5">
                             <i class="fa-solid fa-laptop text-slate-400"></i>
-                            <span id="modal-update-current-ver">v2.0.0</span>
+                            <span id="modal-update-current-ver">v{{ app_version }}</span>
                         </div>
                     </div>
                     <div>

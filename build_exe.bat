@@ -20,8 +20,13 @@ python -m PyInstaller ^
     --hidden-import "webview" ^
     --hidden-import "clr" ^
     --hidden-import "pythonnet" ^
+    --exclude-module "IPython" ^
+    --exclude-module "pandas" ^
+    --exclude-module "numpy" ^
+    --exclude-module "matplotlib" ^
+    --exclude-module "scipy" ^
     --clean ^
-    --distpath "." ^
+    --distpath "dist" ^
     desktop_app.py
 
 if errorlevel 1 (
@@ -33,7 +38,7 @@ if errorlevel 1 (
 
 echo.
 echo ================================================================
-echo   [THÀNH CÔNG] ĐÃ TẠO FILE: TrichXuatHoaDon.exe
+echo   [THÀNH CÔNG] ĐÃ TẠO FILE: dist\TrichXuatHoaDon.exe
 echo   File chạy độc lập hoàn toàn, không cần cài đặt Python.
 echo ================================================================
 pause

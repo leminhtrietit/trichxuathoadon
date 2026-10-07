@@ -89,7 +89,8 @@ def save_user_settings(settings):
 
 _initial_settings = load_user_settings()
 current_excel_path = _initial_settings.get('excel_path', config.DEFAULT_EXCEL_PATH)
-ensure_excel_file(current_excel_path)
+if not os.path.exists(current_excel_path):
+    ensure_excel_file(current_excel_path).close()
 
 @app.after_request
 def add_tracking_headers(response):
@@ -105,7 +106,7 @@ def add_tracking_headers(response):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', app_version=config.APP_VERSION)
 
 @app.route('/api/status', methods=['GET'])
 def get_status():
@@ -274,8 +275,9 @@ def scan_folder_api():
         if valid_invoices:
             save_info = save_invoices_to_excel(valid_invoices, current_excel_path, overwrite=overwrite)
             # Cập nhật trạng thái sau khi lưu
-            for inv in valid_invoices:
-                inv['already_in_excel'] = True
+            if save_info.get('success'):
+                for inv in valid_invoices:
+                    inv['already_in_excel'] = True
 
     summary = read_excel_summary(current_excel_path)
 

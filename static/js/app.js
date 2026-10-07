@@ -21,33 +21,42 @@ const state = {
 };
 
 // Khởi chạy khi tài liệu sẵn sàng
-document.addEventListener('DOMContentLoaded', () => {
-    initThemeSystem();
-    initTabs();
-    initExtractionModals();
-    initFolderScanner();
-    initPivotTab();
-    initDropzone();
-    initActionButtons();
-    initSettings();
-    initInitExcelModal();
-    initClearDataModal();
-    initInvoiceModal();
-    initAboutModal();
-    initUpdateChecker();
-    loadAppStatus();
-    loadExcelData();
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        initThemeSystem();
+        initTabs();
+        initExtractionModals();
+        initFolderScanner();
+        initPivotTab();
+        initDropzone();
+        initActionButtons();
+        initSettings();
+        initInitExcelModal();
+        initClearDataModal();
+        initInvoiceModal();
+        initAboutModal();
+        initUpdateChecker();
+        await Promise.allSettled([loadAppStatus(), loadExcelData()]);
+    } finally {
+        clearTimeout(window.startupFallback);
+        const screen = document.getElementById('startup-screen');
+        if (screen) {
+            screen.classList.add('is-ready');
+            setTimeout(() => screen.remove(), 300);
+        }
+    }
 });
 
 // Format tiền tệ VND
+const numberFormatter = new Intl.NumberFormat('vi-VN');
 function formatCurrency(amount) {
     if (amount === undefined || amount === null || isNaN(amount)) return '0 đ';
-    return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
+    return numberFormatter.format(amount) + ' đ';
 }
 
 function formatNumber(num) {
     if (num === undefined || num === null || isNaN(num)) return '0';
-    return new Intl.NumberFormat('vi-VN').format(num);
+    return numberFormatter.format(num);
 }
 
 // Hiển thị Toast thông báo hiện đại
@@ -1310,6 +1319,9 @@ async function loadExcelData() {
     try {
         const res = await fetch('/api/excel-data');
         const data = await res.json();
+        if (!res.ok || data.error) {
+            throw new Error(data.error || 'Không thể tải dữ liệu Excel');
+        }
 
         state.excelRows = data.rows || [];
         state.pivotBySupplier = data.pivot_by_supplier || [];
@@ -1326,6 +1338,7 @@ async function loadExcelData() {
         renderPivotTab();
     } catch (err) {
         console.error('Lỗi khi tải dữ liệu Excel:', err);
+        showToast(`Không thể đọc dữ liệu Excel. Vui lòng kiểm tra file trong Cài Đặt.`, 'error');
     }
 }
 

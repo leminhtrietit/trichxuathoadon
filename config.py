@@ -6,9 +6,15 @@ Bản quyền © 2026 MinhTrietEras. All rights reserved.
 """
 
 import os
+import sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, 'data')
+# PyInstaller giải nén mã nguồn vào thư mục tạm; dữ liệu phải ở nơi bền vững.
+if getattr(sys, 'frozen', False):
+    DATA_DIR = os.path.join(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')),
+                            'MinhTrietEras', 'TrichXuatHoaDon', 'data')
+else:
+    DATA_DIR = os.path.join(BASE_DIR, 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
 
 # File Excel mặc định
@@ -19,7 +25,7 @@ SAMPLE_XML_PATH = r"C:\Users\minht\Downloads\348826-T01-2026.xml"
 
 # Thông tin Tác giả & Tracking Bản Quyền
 APP_NAME = "Trích xuất hóa đơn"
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.0.1"
 AUTHOR = "Lê Minh Triết"
 ORGANIZATION = "MinhTrietEras"
 WEBSITE = "https://leminhtriet.com"

@@ -12,6 +12,8 @@ Cấu trúc chuẩn 3 Sheet:
 """
 
 import os
+from copy import deepcopy
+from threading import RLock
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
@@ -30,7 +32,8 @@ def to_float(val, default=0.0):
 
 def get_col_map(ws):
     """Lấy bản đồ tên cột -> số cột để chống lỗi lệch cột"""
-    return {str(ws.cell(row=1, column=c).value or '').strip(): c for c in range(1, ws.max_column + 1)}
+    headers = next(ws.iter_rows(min_row=1, max_row=1, values_only=True), ())
+    return {str(value or '').strip(): c for c, value in enumerate(headers, start=1)}
 
 # Màu sắc và kiểu dáng định dạng Excel chuyên nghiệp (Tone Hồng / Rose thanh lịch)
 COLOR_TITLE = "831843"         # Đỏ vang đậm sang trọng
@@ -169,8 +172,8 @@ def ensure_excel_file(filepath):
                 wb.create_sheet("TongQuan", 0)
             set_workbook_metadata(wb)
             return wb
-        except Exception:
-            pass
+        except Exception as exc:
+            raise ValueError(f'Không thể đọc file Excel hiện có; giữ nguyên file: {filepath}') from exc
 
     wb = openpyxl.Workbook()
     # Sheet 1: Tổng quan (Dashboard)
@@ -557,7 +560,11 @@ def save_invoices_to_excel(invoices_list, filepath, overwrite=False):
         Nếu True: Replace/cập nhật hóa đơn cũ tại đúng vị trí, KHÔNG TĂNG THÊM DÒNG!
         Nếu False: Bỏ qua hóa đơn trùng, KHÔNG THÊM DÒNG!
     """
-    wb = ensure_excel_file(filepath)
+    try:
+        wb = ensure_excel_file(filepath)
+    except (OSError, ValueError) as exc:
+        return {'success': False, 'error': str(exc), 'added': 0, 'updated': 0,
+                'skipped': 0, 'errors': [str(exc)]}
     ws_summary = wb["TongHopHoaDon"]
     ws_detail = wb["ChiTietHangHoa"]
 
@@ -747,7 +754,29 @@ def save_invoices_to_excel(invoices_list, filepath, overwrite=False):
         'errors': errors
     }
 
+_summary_cache = {}
+_summary_cache_lock = RLock()
+
+
 def read_excel_summary(filepath):
+    """Tái sử dụng kết quả khi file chưa đổi; chỉ giữ file đang đọc trong bộ nhớ."""
+    with _summary_cache_lock:
+        try:
+            stat = os.stat(filepath)
+            fingerprint = (os.path.abspath(filepath), stat.st_mtime_ns, stat.st_ctime_ns,
+                           stat.st_size)
+        except OSError:
+            return _read_excel_summary(filepath)
+        if fingerprint in _summary_cache:
+            return deepcopy(_summary_cache[fingerprint])
+        result = _read_excel_summary(filepath)
+        _summary_cache.clear()
+        if not result.get('error'):
+            _summary_cache[fingerprint] = result
+        return deepcopy(result)
+
+
+def _read_excel_summary(filepath):
     """Đọc dữ liệu từ file Excel để hiển thị trên web app"""
     if not os.path.exists(filepath):
         return {
@@ -759,8 +788,9 @@ def read_excel_summary(filepath):
             'pivot_by_month': []
         }
 
+    wb = None
     try:
-        wb = openpyxl.load_workbook(filepath, data_only=True)
+        wb = openpyxl.load_workbook(filepath, data_only=True, read_only=True)
         if "TongHopHoaDon" not in wb.sheetnames:
             return {'exists': True, 'filepath': filepath, 'rows': [], 'stats': {'total_invoices': 0, 'total_amount': 0, 'total_vat': 0, 'unique_sellers': 0}}
         
@@ -795,33 +825,33 @@ def read_excel_summary(filepath):
         c_fname = col_map.get('Tên file gốc', 21)
         c_time = col_map.get('Thời gian nhập', 22)
 
-        for r in range(2, ws.max_row + 1):
-            so_hd = str(ws.cell(row=r, column=c_so_hd).value or '').strip()
+        for values in ws.iter_rows(min_row=2, max_col=max(col_map.values(), default=22), values_only=True):
+            so_hd = str(values[c_so_hd - 1] or '').strip()
             if not so_hd or so_hd.lower() == 'none':
                 continue
             
-            stt = ws.cell(row=r, column=c_stt).value
-            folder = str(ws.cell(row=r, column=c_folder).value or 'Thư mục gốc').strip()
-            ngay_lap = str(ws.cell(row=r, column=c_ngay).value or '').strip()
-            mau_so = str(ws.cell(row=r, column=c_mau_so).value or '').strip()
-            ky_hieu = str(ws.cell(row=r, column=c_ky_hieu).value or '').strip()
-            ma_cqt = str(ws.cell(row=r, column=c_cqt).value or '').strip()
-            nb_mst = str(ws.cell(row=r, column=c_nb_mst).value or '').strip()
-            nb_ten = str(ws.cell(row=r, column=c_nb_ten).value or '').strip()
-            nb_dchi = str(ws.cell(row=r, column=c_nb_dchi).value or '').strip()
-            nm_mst = str(ws.cell(row=r, column=c_nm_mst).value or '').strip()
-            nm_ten = str(ws.cell(row=r, column=c_nm_ten).value or '').strip()
-            nm_dchi = str(ws.cell(row=r, column=c_nm_dchi).value or '').strip()
-            hinh_thuc_tt = str(ws.cell(row=r, column=c_httt).value or '').strip()
+            stt = values[c_stt - 1]
+            folder = str(values[c_folder - 1] or 'Thư mục gốc').strip()
+            ngay_lap = str(values[c_ngay - 1] or '').strip()
+            mau_so = str(values[c_mau_so - 1] or '').strip()
+            ky_hieu = str(values[c_ky_hieu - 1] or '').strip()
+            ma_cqt = str(values[c_cqt - 1] or '').strip()
+            nb_mst = str(values[c_nb_mst - 1] or '').strip()
+            nb_ten = str(values[c_nb_ten - 1] or '').strip()
+            nb_dchi = str(values[c_nb_dchi - 1] or '').strip()
+            nm_mst = str(values[c_nm_mst - 1] or '').strip()
+            nm_ten = str(values[c_nm_ten - 1] or '').strip()
+            nm_dchi = str(values[c_nm_dchi - 1] or '').strip()
+            hinh_thuc_tt = str(values[c_httt - 1] or '').strip()
             
-            tien_chua_thue = to_float(ws.cell(row=r, column=c_chua_thue).value)
-            tien_thue = to_float(ws.cell(row=r, column=c_thue).value)
-            tong_tien = to_float(ws.cell(row=r, column=c_tong).value)
-            tien_chu = str(ws.cell(row=r, column=c_chu).value or '')
-            so_mat_hang = int(to_float(ws.cell(row=r, column=c_so_mon).value))
-            file_type = str(ws.cell(row=r, column=c_loai).value or 'XML')
-            filename = str(ws.cell(row=r, column=c_fname).value or '')
-            thoi_gian_nhap = str(ws.cell(row=r, column=c_time).value or '')
+            tien_chua_thue = to_float(values[c_chua_thue - 1])
+            tien_thue = to_float(values[c_thue - 1])
+            tong_tien = to_float(values[c_tong - 1])
+            tien_chu = str(values[c_chu - 1] or '')
+            so_mat_hang = int(to_float(values[c_so_mon - 1]))
+            file_type = str(values[c_loai - 1] or 'XML')
+            filename = str(values[c_fname - 1] or '')
+            thoi_gian_nhap = str(values[c_time - 1] or '')
 
             total_amount += tong_tien
             total_vat += tien_thue
@@ -898,6 +928,10 @@ def read_excel_summary(filepath):
             'pivot_by_supplier': [],
             'pivot_by_month': []
         }
+
+    finally:
+        if wb is not None:
+            wb.close()
 
 def init_blank_excel_file(filepath):
     """

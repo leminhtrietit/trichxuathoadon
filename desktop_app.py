@@ -1,95 +1,78 @@
-"""
-desktop_app.py - Khởi chạy ứng dụng Trích xuất hóa đơn dưới dạng Desktop App độc lập
-Sử dụng PyWebView (Microsoft Edge WebView2) tạo cửa sổ ứng dụng Windows chuẩn
+"""Ứng dụng Desktop — Lê Minh Triết / MinhTrietEras."""
 
-Tác giả / Bản quyền: Lê Minh Triết (MinhTrietEras)
-Website: https://leminhtriet.com
-Bản quyền © 2026 MinhTrietEras. All rights reserved.
-"""
-
-import os
+import base64
+import json
+import logging
+from pathlib import Path
 import sys
 import threading
-import time
-import socket
-import logging
 
-# Đảm bảo mã hóa UTF-8 cho Windows console
-if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+
+def startup_html():
+    """Màn hình chờ độc lập, không cần mạng hay máy chủ Flask."""
+    root = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent))
+    logo = base64.b64encode((root / 'static/images/logo.png').read_bytes()).decode('ascii')
+    css = (root / 'static/css/startup.css').read_text(encoding='utf-8')
+    markup = (root / 'templates/startup.html').read_text(encoding='utf-8')
+    markup = markup.replace('/static/images/logo.png', f'data:image/png;base64,{logo}')
+    return f'<!doctype html><html lang="vi"><head><meta charset="utf-8"><style>{css}</style></head><body>{markup}</body></html>'
+
+
+def start_application(window, server_state):
+    """Nạp thư viện nặng sau khi cửa sổ đã hiển thị logo."""
     try:
-        sys.stdout.reconfigure(encoding='utf-8')
-    except Exception:
-        pass
-if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
-    try:
-        sys.stderr.reconfigure(encoding='utf-8')
-    except Exception:
-        pass
+        from werkzeug.serving import make_server
+        from app import app
+        server = make_server('127.0.0.1', 0, app, threaded=True)
+        with server_state['lock']:
+            if server_state['closed']:
+                server.server_close()
+                return
+            server_state['server'] = server
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+        window.load_url(f'http://127.0.0.1:{server.server_port}')
+    except Exception as exc:
+        logging.exception('Không thể khởi động ứng dụng')
+        message = json.dumps(f'Không thể khởi động ứng dụng: {exc}', ensure_ascii=False)
+        try:
+            window.evaluate_js(
+                "document.getElementById('startup-message').textContent = " + message + ";"
+                "document.querySelector('.startup-progress').hidden = true;"
+            )
+        except Exception:
+            logging.exception('Không thể hiển thị thông báo khởi động')
 
-# Tắt bớt log không cần thiết của werkzeug trong môi trường desktop
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
-
-import webview
-from app import app
-import config
-
-def find_available_port(start_port=5000):
-    """Tìm cổng TCP còn trống trên 127.0.0.1 để tránh xung đột cổng"""
-    for p in range(start_port, start_port + 50):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            if s.connect_ex(('127.0.0.1', p)) != 0:
-                return p
-    return start_port
-
-def start_flask_server(port):
-    """Khởi động máy chủ Flask trong luồng daemon ngầm"""
-    try:
-        app.run(
-            host=config.HOST,
-            port=port,
-            debug=False,
-            use_reloader=False,
-            threaded=True
-        )
-    except Exception as e:
-        print(f"Lỗi khởi động Flask: {e}")
 
 def main():
-    # 1. Chọn cổng khả dụng và khởi động Flask Server riêng cho phiên làm việc
-    active_port = find_available_port(config.PORT)
-    flask_thread = threading.Thread(target=start_flask_server, args=(active_port,), daemon=True)
-    flask_thread.start()
+    import webview
 
-    target_url = f"http://{config.HOST}:{active_port}"
-
-    # Chờ tối đa 5 giây cho tới khi server phản hồi HTTP thực tế
-    import urllib.request
-    for _ in range(50):
-        try:
-            with urllib.request.urlopen(f"{target_url}/api/status", timeout=0.5) as res:
-                if res.status == 200:
-                    break
-        except Exception:
-            time.sleep(0.1)
-
-    # 2. Tạo cửa sổ Desktop chuẩn bằng PyWebView
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    server_state = {'server': None, 'closed': False, 'lock': threading.Lock()}
     window = webview.create_window(
         title='Trích xuất hóa đơn - MinhTrietEras',
-        url=target_url,
-        width=1320,
-        height=860,
-        min_size=(1024, 680),
-        resizable=True,
-        text_select=True,
-        confirm_close=False
+        html=startup_html(), width=1320, height=860,
+        min_size=(1024, 680), resizable=True, text_select=True,
+        confirm_close=False, background_color='#f6f7fc',
     )
+    started = threading.Event()
 
-    # 3. Khởi chạy vòng lặp sự kiện Desktop GUI (chặn cho tới khi người dùng đóng cửa sổ)
+    def on_loaded():
+        if not started.is_set():
+            started.set()
+            threading.Thread(target=start_application, args=(window, server_state), daemon=True).start()
+
+    def on_closed():
+        with server_state['lock']:
+            server_state['closed'] = True
+            server = server_state['server']
+        if server:
+            server.shutdown()
+            server.server_close()
+
+    window.events.loaded += on_loaded
+    window.events.closed += on_closed
     webview.start()
 
-    # 4. Khi đóng cửa sổ, tiến trình chính kết thúc, luồng Flask daemon tự động thoát
-    sys.exit(0)
 
 if __name__ == '__main__':
     main()
