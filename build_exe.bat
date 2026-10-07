@@ -12,6 +12,7 @@ python -m PyInstaller ^
     --name "TrichXuatHoaDon" ^
     --onefile ^
     --noconsole ^
+    --icon "logo.ico" ^
     --add-data "templates;templates" ^
     --add-data "static;static" ^
     --hidden-import "openpyxl" ^

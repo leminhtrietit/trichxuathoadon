@@ -34,16 +34,20 @@ import webview
 from app import app
 import config
 
-def is_port_in_use(port):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(('127.0.0.1', port)) == 0
+def find_available_port(start_port=5000):
+    """Tìm cổng TCP còn trống trên 127.0.0.1 để tránh xung đột cổng"""
+    for p in range(start_port, start_port + 50):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(('127.0.0.1', p)) != 0:
+                return p
+    return start_port
 
-def start_flask_server():
+def start_flask_server(port):
     """Khởi động máy chủ Flask trong luồng daemon ngầm"""
     try:
         app.run(
             host=config.HOST,
-            port=config.PORT,
+            port=port,
             debug=False,
             use_reloader=False,
             threaded=True
@@ -52,21 +56,24 @@ def start_flask_server():
         print(f"Lỗi khởi động Flask: {e}")
 
 def main():
-    # 1. Khởi động Flask Server nếu port chưa được dùng
-    if not is_port_in_use(config.PORT):
-        flask_thread = threading.Thread(target=start_flask_server, daemon=True)
-        flask_thread.start()
+    # 1. Chọn cổng khả dụng và khởi động Flask Server riêng cho phiên làm việc
+    active_port = find_available_port(config.PORT)
+    flask_thread = threading.Thread(target=start_flask_server, args=(active_port,), daemon=True)
+    flask_thread.start()
 
-        # Chờ tối đa 3 giây để server lắng nghe
-        for _ in range(30):
-            if is_port_in_use(config.PORT):
-                break
+    target_url = f"http://{config.HOST}:{active_port}"
+
+    # Chờ tối đa 5 giây cho tới khi server phản hồi HTTP thực tế
+    import urllib.request
+    for _ in range(50):
+        try:
+            with urllib.request.urlopen(f"{target_url}/api/status", timeout=0.5) as res:
+                if res.status == 200:
+                    break
+        except Exception:
             time.sleep(0.1)
 
     # 2. Tạo cửa sổ Desktop chuẩn bằng PyWebView
-    target_url = f"http://{config.HOST}:{config.PORT}"
-
-    # Thiết lập kích thước cửa sổ phù hợp
     window = webview.create_window(
         title='Trích xuất hóa đơn - MinhTrietEras',
         url=target_url,

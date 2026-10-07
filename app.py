@@ -93,14 +93,14 @@ ensure_excel_file(current_excel_path)
 
 @app.after_request
 def add_tracking_headers(response):
-    """Gắn metadata bản quyền, tác giả và tracking ID vào mọi HTTP Response"""
-    response.headers['X-Author'] = config.AUTHOR
-    response.headers['X-Organization'] = config.ORGANIZATION
-    response.headers['X-Website'] = config.WEBSITE
-    response.headers['X-App-Name'] = config.APP_NAME
-    response.headers['X-App-Version'] = config.APP_VERSION
-    response.headers['X-Tracking-ID'] = config.TRACKING_ID
-    response.headers['X-Powered-By'] = f"{config.ORGANIZATION} ({config.WEBSITE})"
+    """Gắn metadata bản quyền, tác giả và tracking ID vào mọi HTTP Response (chuẩn ASCII header an toàn)"""
+    response.headers['X-Author'] = 'Le Minh Triet (MinhTrietEras)'
+    response.headers['X-Organization'] = 'MinhTrietEras'
+    response.headers['X-Website'] = 'https://leminhtriet.com'
+    response.headers['X-App-Name'] = 'Trich Xuat Hoa Don'
+    response.headers['X-App-Version'] = str(config.APP_VERSION)
+    response.headers['X-Tracking-ID'] = str(config.TRACKING_ID)
+    response.headers['X-Powered-By'] = 'MinhTrietEras (https://leminhtriet.com)'
     return response
 
 @app.route('/')
