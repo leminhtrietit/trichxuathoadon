@@ -38,13 +38,14 @@ Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng 
 - **Tinh gọn Popup Góp Ý & Báo Lỗi:**
   + `templates/index.html` & `static/js/app.js`: Bỏ toàn bộ các dòng mô tả kỹ thuật rườm rà (thông tin website nhận, checkbox cho phép kết nối, mô tả độ dài ký tự). Thiết kế lại form tinh gọn, hiện đại chuẩn Material 3: Header gradient, vùng nhập nội dung, email liên hệ, nút Sao chép, Hủy và Gửi góp ý.
   + Biên dịch lại `static/css/tailwind.css`.
-- **Cập nhật nhận diện phiên bản:**
-  + Tiêu đề cửa sổ Desktop: `Trích Xuất Hóa Đơn v2.0.9 - MinhTrietEras`.
-  + Gắn badge `v2.0.9` tại thanh Sidebar góc trên cùng bên trái.
-  + Thẻ `<title>` và metadata ứng dụng cập nhật đồng bộ v2.0.9.
+- **Đặt tên file thực thi kèm phiên bản & Giữ nguyên tiêu đề app:**
+  + Tiêu đề cửa sổ Desktop & thanh thương hiệu Windows giữ nguyên tên tiêu chuẩn: `Trích xuất hóa đơn - MinhTrietEras`.
+  + Tên file thực thi biên dịch đóng gói được đặt kèm phiên bản: `dist/v2.0.9/TrichXuatHoaDon-v2.0.9.exe` (26.706.911 bytes, SHA-256: `5b6e3a81f8938f4ac1b6ef149dfb6f9ee2a9d5ffcf809ed51261bbde2bc83cfd`).
+  + Gói phân phối ZIP: `dist/TrichXuatHoaDon-v2.0.9-Windows.zip` (26.149.838 bytes, SHA-256: `9bcdd510e7d99a8ad857912ae9752235461b4b48839b80839d6ade31db9390ff`).
+  + File cấu hình kiểm tra tính toàn vẹn: `dist/v2.0.9/release-manifest.json` và `dist/v2.0.9/SHA256SUMS.txt`.
 - **Kiểm thử & Bản đóng gói:**
   + Đạt 29/29 bài test backend và toàn bộ luồng kiểm thử UI Edge headless (`tests/feedback_ui.cjs`).
-  + Đóng gói thành công `dist/v2.0.9/TrichXuatHoaDon.exe` và `dist/TrichXuatHoaDon-v2.0.9-Windows.zip` kèm manifest SHA-256.
+  + Đóng gói thành công `dist/v2.0.9/TrichXuatHoaDon-v2.0.9.exe` chạy độc lập, khởi động nhanh và giữ kích thước tối ưu (~26.7 MB).
 
 ### Đã hoàn thành trước đó (Lịch sử)
 
@@ -88,7 +89,8 @@ Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng 
 - Đóng gói Tailwind CSS và Font Awesome tại máy, không tải CDN cho giao diện; dùng font hệ thống.
 - Bản `.exe` lưu cấu hình và workbook mặc định vào `%LOCALAPPDATA%\MinhTrietEras\TrichXuatHoaDon\data`; đường dẫn Excel riêng vẫn do người dùng chọn. Chạy từ mã nguồn dùng thư mục `data` của dự án.
 - Chặn ghi đè workbook hiện có nhưng không đọc được; thông báo lỗi đọc Excel trên giao diện. Quét thư mục chỉ đánh dấu đã lưu khi lưu thành công.
-- Loại thư viện tùy chọn không dùng khỏi bản đóng gói; bản mới nằm ở **`dist/v2.0.8/TrichXuatHoaDon.exe`**. ZIP mới: `dist/TrichXuatHoaDon-v2.0.8-Windows.zip`. Các file `.exe`/ZIP v2.0.0 đến v2.0.7 vẫn là bản cũ; mở đúng bản v2.0.8 để dùng bản sửa lỗi; chưa có bước chuyển dữ liệu tự động từ bản cũ.
+- Loại thư viện tùy chọn không dùng khỏi bản đóng gói; bản mới nhất nằm ở **`dist/v2.0.9/TrichXuatHoaDon-v2.0.9.exe`**. ZIP mới: `dist/TrichXuatHoaDon-v2.0.9-Windows.zip`. Các file `.exe`/ZIP các phiên bản cũ lưu trữ tại thư mục tương ứng; mở đúng bản v2.0.9 để dùng trọn vẹn bản sửa lỗi và giao diện tinh gọn mới nhất.
+
 
 ### Hiệu năng đã đo
 

@@ -12,8 +12,9 @@ Ngày: 07/10/2026.
 - **Tinh gọn Popup Góp Ý & Báo Lỗi:**
   + Loại bỏ toàn bộ các câu mô tả kỹ thuật rườm rà (thông tin máy chủ, checkbox kết nối Internet, cảnh báo độ dài ký tự).
   + Giao diện form chuẩn Material Design 3 gồm trường nội dung góp ý, email liên hệ, nút Sao chép, Hủy và Gửi góp ý.
-- **Cập nhật nhận diện phiên bản:**
-  + Tiêu đề cửa sổ Desktop: `Trích Xuất Hóa Đơn v2.0.9 - MinhTrietEras`.
-  + Gắn badge `v2.0.9` tại thanh Sidebar góc trên cùng bên trái.
-  + File thực thi: `dist/v2.0.9/TrichXuatHoaDon.exe` và `dist/TrichXuatHoaDon-v2.0.9-Windows.zip`.
+- **Đặt tên file thực thi kèm phiên bản & Giữ nguyên tiêu đề app:**
+  + Tiêu đề cửa sổ Desktop & giao diện Windows giữ nguyên tên tiêu chuẩn: `Trích xuất hóa đơn - MinhTrietEras`.
+  + Tên file thực thi biên dịch đóng gói được đặt kèm phiên bản: `dist/v2.0.9/TrichXuatHoaDon-v2.0.9.exe` (26.706.911 bytes, SHA-256: `5b6e3a81f8938f4ac1b6ef149dfb6f9ee2a9d5ffcf809ed51261bbde2bc83cfd`).
+  + Gói phân phối ZIP: `dist/TrichXuatHoaDon-v2.0.9-Windows.zip` (26.149.838 bytes, SHA-256: `9bcdd510e7d99a8ad857912ae9752235461b4b48839b80839d6ade31db9390ff`).
 - **Kiểm thử:** 29/29 bài test backend và kiểm thử giao diện thực tế Playwright trên Edge headless đạt 100%.
+

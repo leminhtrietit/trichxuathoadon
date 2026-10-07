@@ -12,7 +12,7 @@ for /f "delims=" %%V in ('python -c "import config; print(config.APP_VERSION)"')
 if not defined APP_VERSION exit /b 1
 
 python -m PyInstaller ^
-    --name "TrichXuatHoaDon" ^
+    --name "TrichXuatHoaDon-v%APP_VERSION%" ^
     --onefile ^
     --noconsole ^
     --icon "static\images\app-icon.ico" ^
@@ -41,7 +41,7 @@ if errorlevel 1 (
 
 echo.
 echo ================================================================
-echo   [THÀNH CÔNG] ĐÃ TẠO FILE: dist\v%APP_VERSION%\TrichXuatHoaDon.exe
+echo   [THÀNH CÔNG] ĐÃ TẠO FILE: dist\v%APP_VERSION%\TrichXuatHoaDon-v%APP_VERSION%.exe
 echo   File chạy độc lập hoàn toàn, không cần cài đặt Python.
 echo ================================================================
 pause
