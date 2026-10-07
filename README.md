@@ -24,15 +24,19 @@
 
 Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng hợp theo nhà cung cấp và kỳ kê khai thuế, cùng bộ lọc trên giao diện ứng dụng.
 
-## Thực trạng dự án — v2.0.6, cập nhật 07/10/2026
+## Thực trạng dự án — v2.0.7, cập nhật 07/10/2026
 
 **Quy tắc dành cho các agent:** đọc mục này và [AGENTS.md](AGENTS.md) trước khi làm việc. Sau mỗi đợt thay đổi đáng kể, cập nhật README ngay trong cùng đợt làm việc: phần đã hoàn thành, lỗi còn tồn đọng, kết quả kiểm thử và bản đóng gói. README là nơi tra cứu thực trạng hiện tại; báo cáo chi tiết không thay thế việc cập nhật README.
 
 ### Đã hoàn thành
 
+- **v2.0.7 gửi góp ý:** app có sender tới HTTPS cố định `https://leminhtriet.com/api/app-feedback`, chỉ gọi khi người dùng tích đồng ý và bấm Gửi. Backend kiểm tra đồng ý/phiên bản consent, nội dung/email, UUID, Origin/host và thiết lập đã hoàn tất; không gửi file/hóa đơn/Excel/path/cookie hoặc khóa quản trị. Chặn redirect, giới hạn thời gian/kích thước phản hồi và chỉ báo thành công khi website xác nhận đúng UUID đã gửi. Lỗi giữ bản nháp, không tự gửi nền/thử lại; thử lại chủ động giữ UUID để API không lưu trùng. UI reset đồng ý khi mở hộp và sau thành công.
+- **Website nhận trong quản trị:** mã nguồn Next.js `liquid-glass-portal` đã thêm POST nhận góp ý, trang `/admin/app-feedback` và API quản trị chỉ admin, migration Supabase với RLS, counter rate trong giao dịch và chống trùng UUID/hash. Đã push website lên nhánh `codex/app-feedback`, commit `ee1a171`. **Chưa nhận live:** chưa áp dụng migration/secret/flag và chưa deploy leminhtriet.com; website production chưa kiểm chứng. Thiếu cấu hình website trả 503, app giữ nội dung; không coi phần này đã vận hành. [Hướng dẫn cấu hình thật](docs/FEEDBACK_SETUP.md).
+- **Điều khoản 2026-10-07.1:** bổ sung dữ liệu góp ý tùy chọn/thông tin kết nối/không tự gửi lại. Người đã dùng bản trước cần xem/chấp nhận lại một lần; đường dẫn/theme/workbook cũ được giữ và không khởi tạo lại file đã có.
+
 - **v2.0.6 popup hóa đơn:** tiêu đề “Chi tiết hóa đơn”, bỏ nút in và phần chữ ký dưới cùng/trường Người ký trong bổ sung; giữ thông tin hóa đơn, sản phẩm và tiền thuế. Loại cả tham chiếu JS đến DOM chữ ký để không phát sinh lỗi null. Không sửa parser hoặc cơ chế ghi Excel.
-- **Góp ý:** dấu `?` phía trên Cài đặt mở hộp soạn nội dung/email tùy chọn và ô đồng ý gửi qua Internet. Dùng được khi sidebar thu gọn, giữ focus bàn phím, đóng bằng Escape, reset đồng ý mỗi lần mở. Có sao chép bản nháp; bản nháp chỉ ở bộ nhớ phiên, không ghi Excel/cấu hình. **Chưa gửi được:** chưa có API nhận được xác minh, nút Gửi luôn khóa và thông báo rõ. Mở/soạn góp ý không tạo request mạng; kiểm tra cập nhật vẫn có mạng như trước.
-- **Tích hợp website còn chờ:** chủ dự án chọn nhận qua trang quản trị `leminhtriet.com`. Cần mã nguồn/stack backend website để tạo API HTTPS, lưu DB và mục quản trị có đăng nhập; không cần SMTP. [Hướng dẫn tích hợp](docs/FEEDBACK_SETUP.md) có hợp đồng payload đề xuất và cách đồng ý từng lần; chưa triển khai website hoặc sender, chưa đổi điều khoản vì chưa có hành vi gửi mới. Chưa kiểm thử gửi thật hay quản trị website.
+- **Góp ý v2.0.6 (lịch sử):** dấu `?` phía trên Cài đặt mở hộp soạn nội dung/email tùy chọn và ô đồng ý gửi qua Internet. Dùng được khi sidebar thu gọn, giữ focus bàn phím, đóng bằng Escape, reset đồng ý mỗi lần mở. Có sao chép bản nháp; bản nháp chỉ ở bộ nhớ phiên, không ghi Excel/cấu hình. **Chưa gửi được:** chưa có API nhận được xác minh, nút Gửi luôn khóa và thông báo rõ. Mở/soạn góp ý không tạo request mạng; kiểm tra cập nhật vẫn có mạng như trước.
+- **Tích hợp website ở v2.0.6 (lịch sử):** chủ dự án chọn nhận qua trang quản trị `leminhtriet.com`. Cần mã nguồn/stack backend website để tạo API HTTPS, lưu DB và mục quản trị có đăng nhập; không cần SMTP. [Hướng dẫn tích hợp](docs/FEEDBACK_SETUP.md) có hợp đồng payload đề xuất và cách đồng ý từng lần; chưa triển khai website hoặc sender, chưa đổi điều khoản vì chưa có hành vi gửi mới. Chưa kiểm thử gửi thật hay quản trị website.
 
 - **v2.0.5 thuế từng dòng:** XML ưu tiên `TThue`/`VATAmount`/`TaxAmount` khai báo, kể cả 0/số âm; bỏ lỗi truthiness của Element ở tiền thuế. Phân biệt trường tiền thuế mở rộng `TTin` với thuế suất. Nếu thiếu số tiền thuế, tính từ thành tiền và thuế suất số (gồm thập phân dấu chấm/phẩy), làm tròn 2 chữ số bằng Decimal; hỗ trợ các ký hiệu KCT/KKKNT. Không có đủ dữ liệu thì để trống và UI hiển thị “Chưa xác định”, không giả định thuế bằng 0.
 - **PDF văn bản:** bỏ gán cứng 8%/thuế từng dòng 0. Tính khi đọc được thuế suất cuối dòng; dùng thuế suất chung chỉ khi tổng tiền hàng và tổng thuế đối chiếu khớp; một mặt hàng khớp toàn bộ tiền hàng có thể nhận tiền thuế tổng đã khai báo. Không tự phân bổ tổng thuế cho nhiều dòng thiếu thuế suất. Các thử nghiệm PDF mới dùng văn bản layout giả lập, chưa xác nhận mọi mẫu PDF thực tế.
@@ -63,7 +67,7 @@ Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng 
 - Đóng gói Tailwind CSS và Font Awesome tại máy, không tải CDN cho giao diện; dùng font hệ thống.
 - Bản `.exe` lưu cấu hình và workbook mặc định vào `%LOCALAPPDATA%\MinhTrietEras\TrichXuatHoaDon\data`; đường dẫn Excel riêng vẫn do người dùng chọn. Chạy từ mã nguồn dùng thư mục `data` của dự án.
 - Chặn ghi đè workbook hiện có nhưng không đọc được; thông báo lỗi đọc Excel trên giao diện. Quét thư mục chỉ đánh dấu đã lưu khi lưu thành công.
-- Loại thư viện tùy chọn không dùng khỏi bản đóng gói; bản mới nằm ở **`dist/v2.0.6/TrichXuatHoaDon.exe`**. ZIP mới: `dist/TrichXuatHoaDon-v2.0.6-Windows.zip`. Các file `.exe`/ZIP v2.0.0 đến v2.0.5 vẫn là bản cũ; mở đúng bản v2.0.6 để dùng bản sửa lỗi; chưa có bước chuyển dữ liệu tự động từ bản cũ.
+- Loại thư viện tùy chọn không dùng khỏi bản đóng gói; bản mới nằm ở **`dist/v2.0.7/TrichXuatHoaDon.exe`**. ZIP mới: `dist/TrichXuatHoaDon-v2.0.7-Windows.zip`. Các file `.exe`/ZIP v2.0.0 đến v2.0.6 vẫn là bản cũ; mở đúng bản v2.0.7 để dùng bản sửa lỗi; chưa có bước chuyển dữ liệu tự động từ bản cũ.
 
 ### Hiệu năng đã đo
 
@@ -74,7 +78,7 @@ Workbook tự sinh, mỗi hóa đơn có 5 dòng hàng hóa; mỗi cấu hình �
 | 1.000 / 5.000 | 2,716 giây | 0,722 giây | 0,055 giây |
 | 10.000 / 50.000 | 20,111 giây | 7,745 giây | 0,091 giây |
 
-Bản `.exe` cũ khoảng **46,2 MB**, bản v2.0.6 khoảng **27,2 MB**. Chạy lại số đo bằng `python benchmarks/benchmark_summary.py`; kết quả xuất vào `build/benchmark-results.json`. Script cố định mốc trước tối ưu ở commit `5c90279`, giữ nguyên mốc so sánh sau khi commit các thay đổi mới.
+Bản `.exe` cũ khoảng **46,2 MB**, bản v2.0.7 khoảng **27,8 MB**. Chạy lại số đo bằng `python benchmarks/benchmark_summary.py`; kết quả xuất vào `build/benchmark-results.json`. Script cố định mốc trước tối ưu ở commit `5c90279`, giữ nguyên mốc so sánh sau khi commit các thay đổi mới.
 
 ### Lỗi và giới hạn chưa sửa
 
@@ -97,8 +101,12 @@ Parser XML vẫn có vài nhánh `find(...) or ...` ngoài tiền thuế, bộ t
 
 ### Phạm vi đã kiểm thử và tình trạng bản đóng gói
 
+- **v2.0.7:** 26 test backend đạt (3 test góp ý mới: thiếu đồng ý/field không hợp lệ không tạo client mạng, payload allowlist, fixed HTTPS/no redirect, giới hạn phản hồi, Origin/host/setup). Cả 5 bộ UI đạt trên nguồn và exe cuối với dữ liệu tạm. UI góp ý mock API gửi: mở/tích đồng ý chưa tạo request, email lỗi khóa nút, lỗi giữ nội dung, mở lại reset đồng ý, thử lại cùng UUID và thành công xóa draft. Các bộ quét/xem/thuế vẫn giữ SHA-256 workbook khi chỉ xem. Màn hình chờ/asset đúng v2.0.7. Chưa gửi thật tới production.
+- **Website:** 6 test SQL/API/service/client harness đạt, TypeScript và ESLint file mới đạt, build Cloudflare/OpenNext thành công. SQL kiểm tra trong PGlite một kết nối và route/client boundary mock; chưa thử tranh chấp nhiều kết nối hoặc đăng nhập quản trị bằng browser thật. Build website có cảnh báo Windows/Node middleware và timeout một số trang công khai đã retry thành công; không deploy checkout có công việc khác chưa duyệt.
+- **Bàn giao mới:** `dist/v2.0.7/TrichXuatHoaDon.exe` (27.761.433 byte), `dist/TrichXuatHoaDon-v2.0.7-Windows.zip` kèm manifest/hash; [ghi chú v2.0.7](RELEASE_NOTES_v2.0.7.md). Code app bàn giao `main` trên origin; website feature bàn giao nhánh `codex/app-feedback`. Binary/ZIP không vào Git, chưa tạo GitHub Release v2.0.7.
+
 - **v2.0.6:** 23 test backend đạt. Cả 5 bộ UI (`onboarding_ui`, `scan_ui_regression`, `invoice_view_ui`, `line_tax_ui`, `feedback_ui`) đạt trên mã nguồn và bản `.exe` cuối với dữ liệu tạm: popup đúng tiêu đề, không nút in/DOM chữ ký, xem không đổi SHA-256 workbook; dấu ? nằm trên Cài đặt, dùng được khi thu gọn, đóng/khôi phục focus, reset đồng ý và không tạo request gửi góp ý. Kiểm tra màn hình chờ đúng v2.0.6 và logo nạp đầy đủ. Chưa có kiểm thử gửi thật vì chưa triển khai API.
-- **Bàn giao hiện tại:** `dist/v2.0.6/TrichXuatHoaDon.exe` (27.207.043 byte), `dist/TrichXuatHoaDon-v2.0.6-Windows.zip`; manifest có SHA-256 và commit nguồn. Xem [ghi chú v2.0.6](RELEASE_NOTES_v2.0.6.md), [ảnh hộp góp ý](docs/feedback-preview.png) và [tích hợp website](docs/FEEDBACK_SETUP.md). Mã nguồn bàn giao nhánh `main` trên origin; chưa xuất bản GitHub Release v2.0.6, binary/ZIP không đưa vào Git.
+- **Bàn giao v2.0.6 (lịch sử):** `dist/v2.0.6/TrichXuatHoaDon.exe` (27.207.043 byte), `dist/TrichXuatHoaDon-v2.0.6-Windows.zip`; manifest có SHA-256 và commit nguồn. Xem [ghi chú v2.0.6](RELEASE_NOTES_v2.0.6.md), [ảnh hộp góp ý](docs/feedback-preview.png) và [tích hợp website](docs/FEEDBACK_SETUP.md). Mã nguồn bàn giao nhánh `main` trên origin; chưa xuất bản GitHub Release v2.0.6, binary/ZIP không đưa vào Git.
 
 - v2.0.5: 6 test thuế mới đạt, gồm các alias tiền thuế khai báo, 0/âm, trường mở rộng, 8%/10%/1,5%/KCT/KKKNT/thiếu dữ liệu, làm tròn và đọc Excel chỉ bù ô trống. PDF thử với layout text giả lập: thuế suất dòng, thuế suất chung đối chiếu khớp, một dòng với tổng thuế và nhiều dòng thiếu dữ liệu. Bộ UI `tests/line_tax_ui.cjs` dùng upload/lưu API thật trên workbook tạm, bấm cả 4 dòng hóa đơn để kiểm tra thuế khai báo/tính được/chưa xác định, không có khối sản phẩm phụ. Cả 4 bộ UI trên mã nguồn đã đạt; SHA-256 workbook giữ nguyên khi chỉ xem.
 

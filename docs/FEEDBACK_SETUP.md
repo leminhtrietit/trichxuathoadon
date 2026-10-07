@@ -1,40 +1,32 @@
-# Tích hợp góp ý vào leminhtriet.com
+# Tích hợp góp ý — leminhtriet.com
 
-Trạng thái 07/10/2026 — v2.0.6: mới có giao diện bản nháp trên ứng dụng; chưa có route gửi, chưa cấu hình endpoint và chưa gửi dữ liệu. Chủ dự án chọn nhận trong trang quản trị leminhtriet.com. Chưa biết framework/backend hoặc có quyền truy cập mã nguồn website; không suy đoán endpoint đang tồn tại từ trang công khai.
+Thực trạng 07/10/2026, v2.0.7: mã nguồn gửi đã có trong app. Dự án Next.js `liquid-glass-portal` đã có API, migration Supabase và quản trị; push tại nhánh `codex/app-feedback` (commit `ee1a171`) của `leminhtrietit/leminhtriet`. **Chưa chạy migration DB thật/chưa cấu hình flag/secret/chưa deploy website và chưa gửi live.**
 
-## Kiến trúc đề xuất
+Luồng: người dùng đồng ý từng lần + bấm Gửi → Flask cục bộ → HTTPS `https://leminhtriet.com/api/app-feedback` → Supabase → `/admin/app-feedback` có đăng nhập admin. Không cần CORS cho cổng localhost hoặc SMTP. Gửi từ browser chỉ đến Flask cục bộ, endpoint website cố định do server app giữ, không cho chọn URL tùy ý.
 
-Ứng dụng → Flask cục bộ → HTTPS API của website → cơ sở dữ liệu → trang quản trị có đăng nhập.
-
-Đường dẫn đề xuất, CHƯA triển khai: `POST https://leminhtriet.com/api/app-feedback`.
-
-Payload chỉ gồm:
+## Những trường được gửi
 
 ```json
 {
+  "request_id": "d168d240-e454-45ee-b388-8a3b979eab99",
   "app_id": "trich-xuat-hoa-don",
-  "app_version": "2.0.6",
+  "app_version": "2.0.7",
   "message": "Nội dung góp ý",
   "email": "",
+  "consent": true,
   "consent_version": "feedback-v1"
 }
 ```
 
-Website xác thực kiểu dữ liệu; message trim dài 10–4000 ký tự, email tùy chọn tối đa 254 ký tự và đúng định dạng. Giới hạn tổng request nhỏ (ví dụ 16 KB), chỉ nhận app_id hợp lệ. Thành công trả HTTP 201 với `{ "success": true, "id": "..." }` sau khi đã lưu; lỗi dùng 400/413/429/5xx. Giới hạn tần suất tại server và chống spam phù hợp; không coi khóa API được nhúng trong exe là bí mật.
+Không tự đính kèm hóa đơn/XML/PDF/Excel/đường dẫn/cookie. Người gửi cần tránh nhập nội dung nhạy cảm vào lời góp ý. Mã UUID giúp retry chủ động không lưu trùng; backend chỉ báo thành công khi response xác nhận đúng mã đã gửi. Không tự queue, không tự retry; lỗi giữ draft trong bộ nhớ phiên. Không coi ô đồng ý là cấp quyền Internet toàn Windows; updater có mạng riêng như trước.
 
-Bảng đề xuất: id, app_id, app_version, message, email_nullable, consent_version, received_at_utc, status (new/reading/resolved), internal_note. Chỉ tài khoản quản trị được đọc/thay trạng thái; endpoint công khai chỉ cho tạo. Hiển thị message dưới dạng text đã escape, không render HTML người gửi. Định nghĩa thời hạn lưu/xóa và công khai nếu server ghi IP/log mạng. Không cần cấu hình SMTP vì nhận qua trang quản trị.
+## Việc cần triển khai ở website
 
-## Luồng ứng dụng khi API sẵn sàng
+1. Duyệt code và migration `supabase/migrations/20261007120000_add_app_feedback.sql`, backup/quy trình DB rồi áp dụng SQL qua migration của website. SQL tạo bảng mới/RPC; RLS không cho anon/authenticated đọc/gọi RPC. Service-role server đã có dùng cho route, không nhúng vào app hay NEXT_PUBLIC.
+2. Server cần Secret `APP_FEEDBACK_RATE_SECRET` ngẫu nhiên >=32 ký tự và flag `APP_FEEDBACK_ENABLED=true`. Không commit/ghi secret vào tài liệu. Thiếu/tắt trả 503. Supabase URL/anon key và server service role hiện có vẫn cần đúng để xác thực/lưu thật.
+3. Duyệt checkout website trước deploy: hiện có công việc khác chưa commit; build tổng thể bao gồm các file đó. `npm run cf:build` đã thành công nhưng không tự deploy.
+4. Sau khi được phép deploy, gửi một nội dung tổng hợp đã được cho phép, kiểm tra admin thấy đúng dòng, retry cùng UUID không tăng số dòng, trạng thái/ghi chú lưu được và không-admin bị chặn. Không tự gửi dữ liệu hóa đơn để thử.
 
-- Xem trước nơi nhận và những trường sẽ gửi; người dùng chủ động tích cho phép rồi bấm Gửi. Khi mở lại hộp, ô đồng ý trở về chưa tích. Không gộp vào điều khoản bắt buộc để sử dụng chức năng hóa đơn.
-- Flask cục bộ gửi HTTPS với timeout và kiểm tra chứng chỉ; chỉ chấp nhận endpoint chính thức cấu hình sẵn, không nhận URL tùy ý từ trình duyệt. Không gửi cookie/đăng nhập, XML/PDF/Excel, đường dẫn máy hoặc thông tin hóa đơn tự động. Người dùng cần tránh đưa dữ liệu nhạy cảm vào lời góp ý.
-- Không tự gửi nền, không tự gửi lại hoặc tạo hàng đợi ngầm. Lỗi mạng giữ nội dung để người dùng quyết định thử lại; chỉ báo thành công khi server xác nhận lưu. Dùng request id/idempotency khi triển khai để tránh lưu trùng nếu mất phản hồi.
-- Python gọi server nên không cần mở CORS cho các cổng localhost thay đổi. CORS cũng không phải cơ chế chống spam hay xác thực API.
-- Đây là đồng ý trong ứng dụng cho lần gửi; không phải hộp cấp quyền mạng toàn hệ thống Windows. Tính năng kiểm tra cập nhật hiện có kết nối mạng riêng.
-- Cập nhật điều khoản/phiên bản điều khoản và chính sách website theo hành vi thật trước khi bật gửi. Kiểm thử đồng ý/không đồng ý, timeout, lỗi server, rate limit, trùng request, chống chèn HTML và xác minh không gửi file.
+Website giới hạn payload 16 KB, message 10–4.000 ký tự/email <=254. SQL counter giao dịch 5 góp ý mới/giờ theo HMAC IP và 500/giờ chung; chỉ tin địa chỉ incoming Cloudflare. Mã HMAC đổi theo giờ, bucket rate cũ >48h dọn khi có submission mới. Nội dung/email góp ý không có tự hết hạn: chủ website cần rà soát/xóa theo quy trình hỗ trợ và yêu cầu người gửi. Hạ tầng có thể có log kết nối riêng. Chưa kiểm tra tranh chấp nhiều kết nối DB thật hoặc browser đăng nhập admin thật; chưa xác nhận vận hành production.
 
-## Việc cần có để hoàn tất
-
-Mã nguồn hoặc stack backend website và trang quản trị hiện có; migration bảng góp ý, route nhận POST và màn hình quản trị; triển khai HTTPS API, sau đó nối sender trong app. Nếu website tĩnh, cần backend/serverless và kho lưu riêng. Chưa triển khai phần website trong repository ứng dụng này.
-
-Tham khảo: [OWASP REST Security](https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html), [OWASP Input Validation](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html), [MDN CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS).
+Chi tiết triển khai, contract/error và giới hạn kiểm thử nằm ở `docs/APP_FEEDBACK.md` của repository website. App v2.0.7 đã cập nhật TERMS_OF_USE/terms.py (2026-10-07.1). Không cần cung cấp khóa SMTP hoặc mật khẩu quản trị cho app.

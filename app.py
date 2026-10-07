@@ -125,6 +125,29 @@ def add_tracking_headers(response):
 def index():
     return render_template('index.html', app_version=config.APP_VERSION, terms_version=TERMS_VERSION, terms_sections=TERMS_SECTIONS)
 
+@app.route('/api/feedback', methods=['POST'])
+def submit_feedback():
+    from urllib.parse import urlsplit
+    from feedback import send_feedback, FeedbackError
+    # A third-party website must not turn the local desktop app into an outbound relay.
+    origin = request.headers.get('Origin')
+    host = urlsplit(request.host_url)
+    if request.remote_addr not in ('127.0.0.1', '::1') or host.hostname not in ('127.0.0.1', 'localhost', '::1'):
+        return jsonify({'success': False, 'error': 'Yêu cầu không được phép.'}), 403
+    if (origin and origin != request.host_url.rstrip('/')) or request.headers.get('Sec-Fetch-Site') == 'cross-site':
+        return jsonify({'success': False, 'error': 'Yêu cầu không được phép.'}), 403
+    if setup_required(load_user_settings()):
+        return jsonify({'success': False, 'error': 'Hãy hoàn tất thiết lập ứng dụng trước khi gửi góp ý.'}), 403
+    if not request.is_json:
+        return jsonify({'success': False, 'error': 'Dữ liệu góp ý không hợp lệ.'}), 415
+    if (request.content_length or 0) > 16384 or len(request.get_data(cache=True)) > 16384:
+        return jsonify({'success': False, 'error': 'Nội dung quá lớn.'}), 413
+    try:
+        return jsonify(send_feedback(request.get_json(silent=True)))
+    except FeedbackError as error:
+        return jsonify({'success': False, 'error': str(error)}), error.status
+
+
 @app.route('/api/status', methods=['GET'])
 def get_status():
     """Lấy trạng thái, thống kê file Excel hiện tại và metadata bản quyền hệ thống"""

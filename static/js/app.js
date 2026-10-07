@@ -2681,42 +2681,68 @@ async function loadOnboarding() {
     updateOnboardingButton();
 }
 
-// Không kết nối mạng khi mở/soạn góp ý; chỉ bật gửi sau khi tích hợp API thật.
+// Gửi chỉ qua thao tác chủ động và đồng ý từng lần; không có gửi nền.
 function initFeedback() {
     const modal = document.getElementById('feedback-modal');
     const open = document.getElementById('btn-open-feedback');
     const message = document.getElementById('feedback-message');
+    const email = document.getElementById('feedback-email');
     const copy = document.getElementById('btn-copy-feedback');
     const consent = document.getElementById('feedback-consent');
-    let previousFocus;
+    const send = document.getElementById('btn-send-feedback');
+    const closeButton = document.getElementById('btn-close-feedback');
+    const status = document.getElementById('feedback-status');
+    let previousFocus, busy = false, requestId, previousPayload;
+    const update = () => {
+        send.disabled = busy || !consent.checked || message.value.trim().length < 10 || message.value.trim().length > 4000 || !email.checkValidity();
+        copy.disabled = busy || !message.value.trim();
+        [message, email, consent, closeButton].forEach(element => {element.disabled = busy;});
+    };
     const close = () => {
+        if (busy) return;
         modal.classList.add('hidden'); modal.classList.remove('flex');
-        consent.checked = false;
-        setAppInert(false);
-        previousFocus?.focus();
+        consent.checked = false; update(); setAppInert(false); previousFocus?.focus();
     };
     open.addEventListener('click', () => {
         previousFocus = document.activeElement;
-        consent.checked = false;
+        consent.checked = false; update();
         modal.classList.remove('hidden'); modal.classList.add('flex');
         setAppInert(true); message.focus();
     });
-    document.getElementById('btn-close-feedback').addEventListener('click', close);
+    closeButton.addEventListener('click', close);
     modal.addEventListener('click', event => {if (event.target === modal) close();});
     document.addEventListener('keydown', event => {
         if (modal.classList.contains('hidden')) return;
         if (event.key === 'Escape') {event.preventDefault(); close();}
         else trapDialogTab(event, modal);
     });
-    message.addEventListener('input', () => {copy.disabled = !message.value.trim();});
+    [message, email, consent].forEach(element => element.addEventListener('input', update));
     copy.addEventListener('click', async () => {
-        const email = document.getElementById('feedback-email').value.trim();
         try {
-            await navigator.clipboard.writeText(message.value.trim() + (email ? `\nEmail: ${email}` : ''));
-            document.getElementById('feedback-status').textContent = 'Đã sao chép bản nháp. Chưa gửi dữ liệu lên Internet.';
+            await navigator.clipboard.writeText(message.value.trim() + (email.value.trim() ? `\nEmail: ${email.value.trim()}` : ''));
+            status.textContent = 'Đã sao chép bản nháp.';
         } catch (err) {
-            document.getElementById('feedback-status').textContent = 'Không thể sao chép tự động. Hãy chọn nội dung và nhấn Ctrl+C.';
+            status.textContent = 'Không thể sao chép tự động. Hãy chọn nội dung và nhấn Ctrl+C.';
             message.focus(); message.select();
         }
     });
+    send.addEventListener('click', async () => {
+        update(); if (send.disabled) return;
+        const fields = {message:message.value.trim(), email:email.value.trim(), consent:true, consent_version:'feedback-v1'};
+        const fingerprint = JSON.stringify(fields);
+        // Preserve the ID after an ambiguous network failure; explicit retries are idempotent.
+        if (fingerprint !== previousPayload) {requestId = crypto.randomUUID(); previousPayload = fingerprint;}
+        busy = true; update(); send.textContent = 'Đang gửi…'; status.textContent = 'Đang kết nối leminhtriet.com để gửi góp ý…';
+        try {
+            const response = await fetch('/api/feedback', {method:'POST', headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({...fields, request_id:requestId}), signal:AbortSignal.timeout(25000)});
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.error || 'Chưa nhận được xác nhận gửi. Nội dung được giữ để bạn thử lại.');
+            status.textContent = 'Đã gửi góp ý. Cảm ơn bạn!';
+            message.value = ''; email.value = ''; consent.checked = false; previousPayload = undefined; requestId = undefined;
+        } catch (err) {
+            status.textContent = err.name === 'TimeoutError' ? 'Chưa nhận được xác nhận gửi. Nội dung được giữ; bạn có thể chủ động thử lại.' : err.message;
+        } finally {busy = false; send.textContent = 'Gửi góp ý'; update();}
+    });
+    update();
 }
