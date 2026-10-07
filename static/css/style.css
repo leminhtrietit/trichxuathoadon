@@ -1,0 +1,82 @@
+/* style.css - Giao diện hiện đại phong cách Tone Hồng (Pink / Rose Modern Aesthetic) */
+
+/* Active tab style cho Sidebar dọc bên trái */
+.nav-tab.active-tab {
+    background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 24px -4px rgba(244, 63, 94, 0.35) !important;
+    border-radius: 1rem !important;
+}
+
+.nav-tab.active-tab div.w-8 {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+}
+
+.nav-tab.active-tab span#badge-upload-count {
+    background-color: #ffffff !important;
+    color: #ec4899 !important;
+}
+
+.nav-tab.active-tab i {
+    color: #ffffff !important;
+}
+
+/* Hiệu ứng chuyển động mượt mà */
+@keyframes modernFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.99);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.animate-fade-in {
+    animation: modernFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Tùy chỉnh thanh cuộn màu hồng nhạt tinh tế */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #fff5f7;
+}
+::-webkit-scrollbar-thumb {
+    background: #fbcfe8;
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #f472b6;
+}
+
+/* Định dạng in bản thể hiện hóa đơn */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #invoice-modal, #invoice-modal * {
+        visibility: visible;
+    }
+    #invoice-modal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: transparent !important;
+        padding: 0 !important;
+    }
+    #invoice-modal .bg-gradient-to-r,
+    #btn-close-modal,
+    #btn-print-modal {
+        display: none !important;
+    }
+    #invoice-printable-area {
+        padding: 0 !important;
+        border: none !important;
+    }
+}
