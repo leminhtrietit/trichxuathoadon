@@ -32,3 +32,5 @@ Không tự đính kèm hóa đơn/XML/PDF/Excel/đường dẫn/cookie. Ngườ
 Website giới hạn payload 16 KB, message 10–4.000 ký tự/email <=254. SQL counter giao dịch 5 góp ý mới/giờ theo HMAC IP và 500/giờ chung; chỉ tin địa chỉ incoming Cloudflare. Mã HMAC đổi theo giờ, bucket rate cũ >48h dọn khi có submission mới. Nội dung/email góp ý không có tự hết hạn: chủ website cần rà soát/xóa theo quy trình hỗ trợ và yêu cầu người gửi. Hạ tầng có thể có log kết nối riêng. Chưa kiểm tra tranh chấp nhiều kết nối DB thật hoặc browser đăng nhập admin thật; chưa xác nhận vận hành production.
 
 Chi tiết triển khai, contract/error và giới hạn kiểm thử nằm ở `docs/APP_FEEDBACK.md` của repository website. App v2.0.7 đã cập nhật TERMS_OF_USE/terms.py (2026-10-07.1). Không cần cung cấp khóa SMTP hoặc mật khẩu quản trị cho app.
+
+App hiện tại v2.0.8: schema gửi giữ nguyên, app_version là 2.0.8. Kiểm tra cập nhật mặc định thủ công, tùy chọn tự kiểm tra lúc mở app mặc định tắt. Nội dung điều khoản hiện tại là 2026-10-07.2; không thay consent_version góp ý feedback-v1.

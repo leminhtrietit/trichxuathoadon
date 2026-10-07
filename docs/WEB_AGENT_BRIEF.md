@@ -4,7 +4,7 @@ Chủ dự án giao phần website cho agent khác; agent trong repository Tríc
 
 ## Nhiệm vụ
 
-Làm phần nhận và quản lý góp ý trên website Next.js `leminhtriet.com`, dự án tại `C:\Users\minht\.gemini\antigravity\scratch\liquid-glass-portal`. App Windows v2.0.7 đã có chức năng gửi, đồng ý kết nối Internet từng lần, giữ bản nháp khi lỗi và thử lại chủ động bằng cùng request UUID. Hãy triển khai API tương thích hợp đồng dưới đây để không phải sửa/đóng gói app lại.
+Làm phần nhận và quản lý góp ý trên website Next.js `leminhtriet.com`, dự án tại `C:\Users\minht\.gemini\antigravity\scratch\liquid-glass-portal`. App Windows v2.0.8 đã có chức năng gửi, đồng ý kết nối Internet từng lần, giữ bản nháp khi lỗi và thử lại chủ động bằng cùng request UUID. Hãy triển khai API tương thích hợp đồng dưới đây để không phải sửa/đóng gói app lại.
 
 ## Hợp đồng API bắt buộc
 
@@ -18,7 +18,7 @@ Endpoint chính xác: `POST https://leminhtriet.com/api/app-feedback`.
 {
   "request_id": "d168d240-e454-45ee-b388-8a3b979eab99",
   "app_id": "trich-xuat-hoa-don",
-  "app_version": "2.0.7",
+  "app_version": "2.0.8",
   "message": "Tôi muốn cải thiện chức năng tìm hóa đơn",
   "email": "",
   "consent": true,
@@ -27,7 +27,7 @@ Endpoint chính xác: `POST https://leminhtriet.com/api/app-feedback`.
 ```
 
 - `request_id`: UUID v4 do app tạo; dùng làm khóa idempotency. Cùng UUID và cùng nội dung gửi lại phải trả thành công mà không tạo thêm bản ghi. Cùng UUID với nội dung khác trả HTTP 409. Xử lý đúng cả khi nhiều request đến đồng thời.
-- `app_id`: chỉ nhận `trich-xuat-hoa-don`. `app_version`: phiên bản app, ví dụ `2.0.7`; không khóa cứng chỉ một bản, phải tiếp tục nhận các phiên bản sau tương thích.
+- `app_id`: chỉ nhận `trich-xuat-hoa-don`. `app_version`: phiên bản app, ví dụ `2.0.8`; không khóa cứng chỉ một bản, phải tiếp tục nhận các phiên bản sau tương thích.
 - `message`: Unicode, trim, 10–4.000 ký tự; `email`: tùy chọn, app gửi chuỗi rỗng nếu không cung cấp, tối đa 254 ký tự và kiểm tra định dạng nếu có.
 - Bắt buộc `consent === true` và `consent_version === "feedback-v1"`; từ chối nếu thiếu/sai. Chỉ nhận các trường trên; không nhận hóa đơn/file/Excel/path bổ sung. Giới hạn body thực đọc 16 KB, không chỉ tin Content-Length.
 - Sau khi dữ liệu đã được lưu bền vững, trả HTTP 201 (lần đầu) hoặc 200 (lần gửi lại) với JSON <=16 KB:
@@ -71,4 +71,6 @@ Nếu dùng nguyên mã tham khảo Supabase: cần chạy migration mới, cấ
 4. Endpoint HTTPS đúng URL không redirect, phản hồi xác nhận đúng UUID; kiểm thử bằng nội dung tổng hợp được phép, không dùng hóa đơn thật.
 5. Cập nhật README website với migration/cấu hình/test/deploy thực tế, gửi lại URL endpoint đã hoạt động và kết quả kiểm tra cho chủ dự án. Chưa deploy thì ghi rõ chưa deploy; không đánh dấu đã tích hợp live chỉ vì build thành công.
 
-Phía app đã kiểm tra: 26 test backend và 5 bộ UI trên nguồn/exe v2.0.7 đạt; luồng gửi dùng boundary/mock để không gửi dữ liệu ra production. Chưa có kiểm thử nhận live. Không tự liên hệ/gửi thông điệp cho agent Windows hoặc agent khác nếu chủ dự án chưa cho phép.
+Phía app đã kiểm tra: 29 test backend và 6 bộ UI trên nguồn/exe v2.0.8 đạt; luồng gửi dùng boundary/mock để không gửi dữ liệu ra production. Chưa có kiểm thử nhận live. Không tự liên hệ/gửi thông điệp cho agent Windows hoặc agent khác nếu chủ dự án chưa cho phép.
+
+Cập nhật phía Windows v2.0.8: mặc định không tự kiểm tra cập nhật qua Internet; tùy chọn tự kiểm tra mặc định tắt. Không thay schema/endpoint góp ý; agent web phải nhận app_version mới theo hợp đồng.

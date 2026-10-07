@@ -1,6 +1,6 @@
 # Điều khoản sử dụng — Trích xuất hóa đơn
 
-Phiên bản: 2026-10-07.1; áp dụng từ 07/10/2026.
+Phiên bản: 2026-10-07.2; áp dụng từ 07/10/2026.
 
 ## 1. Phạm vi ứng dụng
 
@@ -12,7 +12,7 @@ Bạn chỉ nên xử lý các tài liệu mà mình có quyền sử dụng và
 
 ## 3. Dữ liệu và kết nối mạng
 
-Bản ứng dụng hiện tại xử lý hóa đơn trên máy của bạn, lưu Excel vào vị trí bạn chọn và không gửi nội dung hóa đơn lên máy chủ tác giả. Cấu hình, phiên bản điều khoản đã chấp nhận và thời điểm chấp nhận được lưu tại máy. Sau thiết lập, chức năng kiểm tra cập nhật có thể kết nối GitHub; việc mở website/liên kết tải xuống cũng tạo kết nối mạng. Những dịch vụ này nhận thông tin kết nối thông thường như địa chỉ IP theo chính sách của họ. Góp ý là tùy chọn: chỉ khi bạn tích cho phép và bấm Gửi, ứng dụng mới gửi nội dung góp ý, email nếu bạn cung cấp, phiên bản app và mã xác nhận đồng ý tới leminhtriet.com để tác giả tiếp nhận trong trang quản trị. Không tự đính kèm hóa đơn, Excel hoặc đường dẫn máy; hãy tránh nhập dữ liệu nhạy cảm trong góp ý. Website nhận thông tin kết nối thông thường, dùng mã băm địa chỉ kết nối thay đổi theo giờ để giới hạn gửi và có thể có log hạ tầng theo chính sách website. Không tự gửi lại khi lỗi; bạn quyết định thử lại. Bản nháp chưa gửi chỉ giữ trong bộ nhớ phiên app. Bạn có thể liên hệ tác giả để yêu cầu xử lý/xóa góp ý đã gửi. Nếu chọn thư mục đồng bộ như OneDrive, dữ liệu có thể được dịch vụ đó đồng bộ theo cấu hình của bạn.
+Bản ứng dụng hiện tại xử lý hóa đơn trên máy của bạn, lưu Excel vào vị trí bạn chọn và không gửi nội dung hóa đơn lên máy chủ tác giả. Cấu hình, phiên bản điều khoản đã chấp nhận và thời điểm chấp nhận được lưu tại máy. Mặc định ứng dụng không tự kiểm tra cập nhật qua Internet. Chức năng kiểm tra cập nhật chỉ kết nối GitHub khi bạn bấm kiểm tra hoặc chủ động bật tùy chọn tự kiểm tra khi mở app; việc mở website/liên kết tải xuống cũng tạo kết nối mạng. Những dịch vụ này nhận thông tin kết nối thông thường như địa chỉ IP theo chính sách của họ. Góp ý là tùy chọn: chỉ khi bạn tích cho phép và bấm Gửi, ứng dụng mới gửi nội dung góp ý, email nếu bạn cung cấp, phiên bản app và mã xác nhận đồng ý tới leminhtriet.com để tác giả tiếp nhận trong trang quản trị. Không tự đính kèm hóa đơn, Excel hoặc đường dẫn máy; hãy tránh nhập dữ liệu nhạy cảm trong góp ý. Website nhận thông tin kết nối thông thường, dùng mã băm địa chỉ kết nối thay đổi theo giờ để giới hạn gửi và có thể có log hạ tầng theo chính sách website. Không tự gửi lại khi lỗi; bạn quyết định thử lại. Bản nháp chưa gửi chỉ giữ trong bộ nhớ phiên app. Bạn có thể liên hệ tác giả để yêu cầu xử lý/xóa góp ý đã gửi. Nếu chọn thư mục đồng bộ như OneDrive, dữ liệu có thể được dịch vụ đó đồng bộ theo cấu hình của bạn.
 
 ## 4. Kiểm tra kết quả và sao lưu
 

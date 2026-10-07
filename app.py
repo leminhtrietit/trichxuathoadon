@@ -71,7 +71,8 @@ def load_user_settings():
         'theme': 'rose',
         'excel_path': config.DEFAULT_EXCEL_PATH,
         'setup_completed': False,
-        'sidebar_collapsed': False
+        'sidebar_collapsed': False,
+        'auto_check_updates': False
     }
     if os.path.exists(SETTINGS_FILE):
         try:
@@ -81,6 +82,7 @@ def load_user_settings():
                     default_settings.update(saved)
         except Exception:
             pass
+    default_settings['auto_check_updates'] = default_settings.get('auto_check_updates') is True
     return default_settings
 
 def save_user_settings(settings):
@@ -607,7 +609,13 @@ def handle_settings():
     global current_excel_path
     if request.method == 'POST':
         data = request.get_json() or {}
+        if not isinstance(data, dict):
+            return jsonify({'success': False, 'error': 'Cấu hình không hợp lệ'}), 400
+        if 'auto_check_updates' in data and not isinstance(data['auto_check_updates'], bool):
+            return jsonify({'success': False, 'error': 'Tự kiểm tra cập nhật phải là bật hoặc tắt'}), 400
         settings = load_user_settings()
+        if 'auto_check_updates' in data:
+            settings['auto_check_updates'] = data['auto_check_updates']
         if 'theme' in data:
             theme_val = str(data['theme']).strip().lower()
             valid_themes = ['rose', 'purple', 'blue', 'green', 'amber', 'teal', 'red', 'slate']

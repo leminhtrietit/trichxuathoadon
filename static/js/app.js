@@ -6,6 +6,7 @@
 // Trạng thái ứng dụng
 const state = {
     setupRequired: true,
+    autoCheckUpdates: false,
     parsedInvoices: [],
     lastExtractionData: null,
     selectedUploadFiles: [],
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initUpdateChecker();
         await loadOnboarding();
         await Promise.allSettled([loadAppStatus(), loadExcelData()]);
+        if (!state.setupRequired && state.autoCheckUpdates) checkAppUpdate(false);
     } finally {
         clearTimeout(window.startupFallback);
         const screen = document.getElementById('startup-screen');
@@ -882,10 +884,20 @@ function initUpdateChecker() {
         });
     }
 
-    // Tự động kiểm tra bản cập nhật ngầm sau 2.5s khi mở app
-    setTimeout(() => {
-        if (!state.setupRequired) checkAppUpdate(false);
-    }, 2500);
+    const automatic = document.getElementById('auto-check-updates');
+    automatic.addEventListener('change', async () => {
+        const requested = automatic.checked;
+        automatic.disabled = true;
+        try {
+            const response = await fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({auto_check_updates:requested})});
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.error || 'Không lưu được lựa chọn cập nhật');
+            state.autoCheckUpdates = result.settings.auto_check_updates === true;
+            showToast(state.autoCheckUpdates ? 'Đã bật tự kiểm tra khi mở app lần sau' : 'Đã tắt tự kiểm tra cập nhật', 'success');
+        } catch (err) {showToast(err.message, 'error');}
+        finally {automatic.checked = state.autoCheckUpdates; automatic.disabled = false;}
+    });
 }
 
 // Mở URL ngoại vi an toàn thông qua Backend (hoặc fallback window.open)
@@ -2655,6 +2667,8 @@ async function loadOnboarding() {
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error('Không tải được thiết lập. Vui lòng thử lại.');
         state.setupRequired = data.required;
+        state.autoCheckUpdates = data.settings.auto_check_updates === true;
+        document.getElementById('auto-check-updates').checked = state.autoCheckUpdates;
         onboardingLoaded = true;
         onboardingTheme = M3_THEMES.some(theme => theme.id === data.settings.theme) ? data.settings.theme : 'rose';
         document.getElementById('onboarding-path').value = data.settings.excel_path || '';
