@@ -26,9 +26,12 @@ if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
     except Exception:
         pass
 
+import re
 import json
 import zipfile
 import subprocess
+import webbrowser
+import urllib.request
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_file
 import config
@@ -555,6 +558,106 @@ def clear_data_api():
         return jsonify(res)
     else:
         return jsonify(res), 500
+
+def compare_versions(v1, v2):
+    """
+    So sánh hai chuỗi phiên bản dạng semver (ví dụ '2.0.0' và '2.1.0' hoặc 'v2.0.0').
+    Trả về:
+       1 nếu v1 > v2
+      -1 nếu v1 < v2
+       0 nếu v1 == v2
+    """
+    def parse_part(v):
+        parts = re.findall(r'\d+', str(v))
+        return [int(x) for x in parts] if parts else [0]
+    p1 = parse_part(v1)
+    p2 = parse_part(v2)
+    max_len = max(len(p1), len(p2))
+    p1 += [0] * (max_len - len(p1))
+    p2 += [0] * (max_len - len(p2))
+    if p1 > p2:
+        return 1
+    elif p1 < p2:
+        return -1
+    return 0
+
+@app.route('/api/check-update', methods=['GET'])
+def check_update_api():
+    """
+    Kiểm tra phiên bản mới nhất từ GitHub Releases công khai
+    """
+    current_version = config.APP_VERSION
+    repo_url = "https://api.github.com/repos/leminhtrietit/trichxuathoadon/releases/latest"
+    try:
+        req = urllib.request.Request(
+            repo_url,
+            headers={
+                'User-Agent': f'TrichXuatHoaDon-App/{current_version} (MinhTrietEras https://leminhtriet.com)'
+            }
+        )
+        with urllib.request.urlopen(req, timeout=6) as response:
+            if response.status == 200:
+                raw_data = response.read().decode('utf-8')
+                data = json.loads(raw_data)
+                latest_tag = data.get('tag_name', '').strip()
+                clean_tag = latest_tag.lstrip('v').strip()
+                release_name = data.get('name', '') or latest_tag
+                release_body = data.get('body', '')
+                html_url = data.get('html_url', '')
+                assets = data.get('assets', [])
+
+                exe_download_url = None
+                zip_download_url = None
+                for a in assets:
+                    name_lower = a.get('name', '').lower()
+                    if name_lower.endswith('.exe'):
+                        exe_download_url = a.get('browser_download_url')
+                    elif name_lower.endswith('.zip'):
+                        zip_download_url = a.get('browser_download_url')
+
+                has_update = compare_versions(clean_tag, current_version) > 0
+
+                return jsonify({
+                    'success': True,
+                    'current_version': current_version,
+                    'latest_version': clean_tag,
+                    'tag_name': latest_tag,
+                    'has_update': has_update,
+                    'release_name': release_name,
+                    'release_notes': release_body,
+                    'release_url': html_url,
+                    'download_url': exe_download_url or zip_download_url or html_url,
+                    'exe_download_url': exe_download_url,
+                    'zip_download_url': zip_download_url,
+                    'published_at': data.get('published_at', '')
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': f'Phản hồi từ GitHub mã {response.status}',
+                    'current_version': current_version
+                }), 502
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Không thể kiểm tra cập nhật: {str(e)}',
+            'current_version': current_version
+        }), 500
+
+@app.route('/api/open-external-url', methods=['POST'])
+def open_external_url_api():
+    """
+    Mở một URL bằng trình duyệt web mặc định của hệ điều hành Windows
+    """
+    data = request.get_json() or {}
+    url = data.get('url', '').strip()
+    if url and (url.startswith('http://') or url.startswith('https://')):
+        try:
+            webbrowser.open(url)
+            return jsonify({'success': True, 'opened_url': url})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+    return jsonify({'success': False, 'error': 'Đường dẫn không hợp lệ'}), 400
 
 if __name__ == '__main__':
     print("==================================================")

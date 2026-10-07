@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initClearDataModal();
     initInvoiceModal();
     initAboutModal();
+    initUpdateChecker();
     loadAppStatus();
     loadExcelData();
 });
@@ -788,6 +789,199 @@ function initAboutModal() {
                 modal.classList.remove('flex');
             }
         });
+    }
+}
+
+// ==============================================================
+// 🌟 TÍNH NĂNG KIỂM TRA CẬP NHẬT PHIÊN BẢN (IN-APP UPDATE CHECKER)
+// ==============================================================
+let cachedUpdateData = null;
+
+function initUpdateChecker() {
+    const btnCheckSettings = document.getElementById('btn-check-update-settings');
+    const btnSidebarCheck = document.getElementById('btn-sidebar-check-update');
+    const modalUpdate = document.getElementById('modal-update-dialog');
+    const btnClose = document.getElementById('btn-close-update-modal');
+    const btnDismiss = document.getElementById('btn-dismiss-update-modal');
+    const btnOpenGithub = document.getElementById('btn-update-open-github');
+    const btnDownload = document.getElementById('btn-download-new-version');
+
+    if (btnCheckSettings) {
+        btnCheckSettings.addEventListener('click', () => {
+            checkAppUpdate(true);
+        });
+    }
+
+    if (btnSidebarCheck) {
+        btnSidebarCheck.addEventListener('click', () => {
+            checkAppUpdate(true);
+        });
+    }
+
+    function closeUpdateModal() {
+        if (modalUpdate) {
+            modalUpdate.classList.add('hidden');
+            modalUpdate.classList.remove('flex');
+        }
+    }
+
+    [btnClose, btnDismiss].forEach(btn => {
+        if (btn) btn.addEventListener('click', closeUpdateModal);
+    });
+
+    if (modalUpdate) {
+        modalUpdate.addEventListener('click', (e) => {
+            if (e.target === modalUpdate) closeUpdateModal();
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modalUpdate && !modalUpdate.classList.contains('hidden')) {
+            closeUpdateModal();
+        }
+    });
+
+    // Mở trang Release trên GitHub
+    if (btnOpenGithub) {
+        btnOpenGithub.addEventListener('click', async () => {
+            const targetUrl = (cachedUpdateData && cachedUpdateData.release_url) 
+                ? cachedUpdateData.release_url 
+                : 'https://github.com/leminhtrietit/trichxuathoadon/releases';
+            await openExternalLink(targetUrl);
+        });
+    }
+
+    // Tải tệp bản mới (.exe hoặc link release)
+    if (btnDownload) {
+        btnDownload.addEventListener('click', async () => {
+            const targetUrl = (cachedUpdateData && (cachedUpdateData.download_url || cachedUpdateData.release_url))
+                ? (cachedUpdateData.download_url || cachedUpdateData.release_url)
+                : 'https://github.com/leminhtrietit/trichxuathoadon/releases/latest';
+            showToast('Đang mở liên kết tải bản cập nhật...', 'info');
+            await openExternalLink(targetUrl);
+        });
+    }
+
+    // Tự động kiểm tra bản cập nhật ngầm sau 2.5s khi mở app
+    setTimeout(() => {
+        checkAppUpdate(false);
+    }, 2500);
+}
+
+// Mở URL ngoại vi an toàn thông qua Backend (hoặc fallback window.open)
+async function openExternalLink(url) {
+    if (!url) return;
+    try {
+        const res = await fetch('/api/open-external-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        });
+        const data = await res.json();
+        if (!data.success) {
+            window.open(url, '_blank');
+        }
+    } catch (e) {
+        window.open(url, '_blank');
+    }
+}
+
+// Kiểm tra bản cập nhật
+async function checkAppUpdate(isManual = false) {
+    const btnCheckSettings = document.getElementById('btn-check-update-settings');
+    const iconCheck = document.getElementById('icon-check-update-settings');
+    const textCheck = document.getElementById('text-check-update-settings');
+    const sidebarDot = document.getElementById('sidebar-update-dot');
+    const settingsBadge = document.getElementById('settings-update-badge');
+    const modalUpdate = document.getElementById('modal-update-dialog');
+
+    if (isManual && btnCheckSettings) {
+        btnCheckSettings.disabled = true;
+        if (iconCheck) {
+            iconCheck.className = 'fa-solid fa-spinner fa-spin';
+        }
+        if (textCheck) {
+            textCheck.textContent = 'Đang kiểm tra...';
+        }
+    }
+
+    try {
+        const res = await fetch('/api/check-update');
+        const data = await res.json();
+
+        if (data.success) {
+            cachedUpdateData = data;
+
+            // Cập nhật số phiên bản hiện tại lên UI settings nếu có
+            const curVerDisplay = document.getElementById('settings-current-ver-display');
+            const appVerBadge = document.getElementById('settings-app-version-badge');
+            if (curVerDisplay) curVerDisplay.textContent = `v${data.current_version}`;
+            if (appVerBadge) appVerBadge.textContent = `v${data.current_version}`;
+
+            if (data.has_update) {
+                // Hiển thị badge và chấm đỏ thông báo
+                if (sidebarDot) sidebarDot.classList.remove('hidden');
+                if (settingsBadge) settingsBadge.classList.remove('hidden');
+
+                // Đổ dữ liệu vào Modal Cập Nhật
+                const modalTag = document.getElementById('modal-update-tag');
+                const modalCurVer = document.getElementById('modal-update-current-ver');
+                const modalLatestVer = document.getElementById('modal-update-latest-ver');
+                const modalNotes = document.getElementById('modal-update-notes');
+                const modalDate = document.getElementById('modal-update-date');
+
+                if (modalTag) modalTag.textContent = data.tag_name || `v${data.latest_version}`;
+                if (modalCurVer) modalCurVer.textContent = `v${data.current_version}`;
+                if (modalLatestVer) modalLatestVer.textContent = `v${data.latest_version}`;
+                if (modalNotes) {
+                    modalNotes.textContent = data.release_notes || 'Bản phát hành cập nhật tối ưu hóa hiệu năng, cải tiến giao diện và bổ sung các tính năng mới.';
+                }
+                if (modalDate) {
+                    if (data.published_at) {
+                        try {
+                            const d = new Date(data.published_at);
+                            modalDate.textContent = `Ngày phát hành: ${d.toLocaleDateString('vi-VN')}`;
+                        } catch (e) {
+                            modalDate.textContent = 'Bản mới nhất';
+                        }
+                    } else {
+                        modalDate.textContent = 'Bản mới nhất';
+                    }
+                }
+
+                // Mở Modal
+                if (modalUpdate) {
+                    modalUpdate.classList.remove('hidden');
+                    modalUpdate.classList.add('flex');
+                }
+            } else {
+                // Không có bản mới hơn
+                if (sidebarDot) sidebarDot.classList.add('hidden');
+                if (settingsBadge) settingsBadge.classList.add('hidden');
+
+                if (isManual) {
+                    showToast(`Bạn đang sử dụng phiên bản mới nhất (v${data.current_version})!`, 'success');
+                }
+            }
+        } else {
+            if (isManual) {
+                showToast(data.error || 'Không thể kiểm tra cập nhật từ GitHub', 'warning');
+            }
+        }
+    } catch (err) {
+        if (isManual) {
+            showToast('Lỗi kết nối khi kiểm tra cập nhật: ' + err.message, 'warning');
+        }
+    } finally {
+        if (btnCheckSettings) {
+            btnCheckSettings.disabled = false;
+            if (iconCheck) {
+                iconCheck.className = 'fa-solid fa-cloud-arrow-down';
+            }
+            if (textCheck) {
+                textCheck.textContent = 'Kiểm Tra Bản Cập Nhật';
+            }
+        }
     }
 }
 

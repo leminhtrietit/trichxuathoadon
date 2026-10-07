@@ -156,13 +156,18 @@
                 </button>
             </div>
 
-            <!-- Sidebar Bottom Footer: Powered by MinhTrietEras with logo -->
-            <div class="px-4 py-3 border-t border-pink-100 bg-white flex items-center justify-between text-[11px] text-slate-500 shrink-0">
-                <button type="button" id="btn-open-about-modal" class="text-slate-400 hover:text-pink-600 transition-colors font-medium flex items-center space-x-1 cursor-pointer" title="Xem thông tin bản quyền & tác giả">
-                    <i class="fa-solid fa-circle-info text-[10px]"></i>
-                    <span>Trích xuất hóa đơn</span>
-                </button>
-                <a href="https://leminhtriet.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center space-x-1.5 text-slate-600 hover:text-pink-600 transition-colors group" title="Tác giả: Lê Minh Triết - MinhTrietEras (https://leminhtriet.com)">
+            <!-- Sidebar Bottom Footer: Powered by MinhTrietEras with logo & version badge -->
+            <div class="px-3.5 py-2.5 border-t border-pink-100 bg-white flex items-center justify-between text-[11px] text-slate-500 shrink-0">
+                <div class="flex items-center space-x-1.5">
+                    <button type="button" id="btn-open-about-modal" class="text-slate-400 hover:text-pink-600 transition-colors font-medium flex items-center cursor-pointer p-1 rounded-lg hover:bg-pink-50" title="Xem thông tin bản quyền & tác giả">
+                        <i class="fa-solid fa-circle-info text-[12px]"></i>
+                    </button>
+                    <button type="button" id="btn-sidebar-check-update" class="relative inline-flex items-center px-1.5 py-0.5 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 font-mono text-[10px] font-bold transition-all cursor-pointer border border-pink-200/60" title="Phiên bản v2.0.0 - Bấm để kiểm tra cập nhật mới">
+                        <span>v2.0.0</span>
+                        <span id="sidebar-update-dot" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white animate-pulse"></span>
+                    </button>
+                </div>
+                <a href="https://leminhtriet.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center space-x-1 text-slate-600 hover:text-pink-600 transition-colors group" title="Tác giả: Lê Minh Triết - MinhTrietEras (https://leminhtriet.com)">
                     <span class="text-[10px] text-slate-400">by</span>
                     <span class="font-semibold text-slate-800 group-hover:text-pink-600">MinhTrietEras</span>
                     <img src="/static/images/logo.png" alt="MinhTrietEras Logo" class="h-4 w-auto object-contain inline-block">
@@ -795,6 +800,56 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- KHỐI 4: THÔNG TIN PHIÊN BẢN & CẬP NHẬT ỨNG DỤNG -->
+                <div class="bg-white rounded-3xl border border-pink-100 p-6 md:p-7 shadow-[0_4px_25px_rgba(244,63,94,0.03)] space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-pink-50">
+                        <div class="flex items-center space-x-3.5">
+                            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-pink-500 via-rose-500 to-pink-600 text-white flex items-center justify-center text-lg shadow-md shadow-pink-500/25">
+                                <i class="fa-solid fa-arrows-rotate"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <h3 class="font-extrabold text-slate-900 text-sm md:text-base">Phiên Bản & Kiểm Tra Cập Nhật</h3>
+                                    <span id="settings-app-version-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-pink-100 text-pink-700 font-mono">v2.0.0</span>
+                                    <span id="settings-update-badge" class="hidden px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white animate-pulse">CÓ BẢN MỚI</span>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5">Ứng dụng tự động đối chiếu phiên bản với GitHub Releases công khai để bạn luôn sở hữu tính năng và bản sửa lỗi mới nhất.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-3">
+                            <button type="button" id="btn-check-update-settings" class="px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl text-xs font-bold shadow-md shadow-pink-500/20 transition-all flex items-center space-x-2 cursor-pointer">
+                                <i class="fa-solid fa-cloud-arrow-down" id="icon-check-update-settings"></i>
+                                <span id="text-check-update-settings">Kiểm Tra Bản Cập Nhật</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                        <div class="p-3.5 bg-pink-50/40 rounded-2xl border border-pink-100 text-xs">
+                            <div class="text-slate-400 text-[11px] font-semibold mb-1">Phiên Bản Đang Dùng</div>
+                            <div class="text-slate-800 font-bold font-mono text-sm flex items-center space-x-1.5">
+                                <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
+                                <span id="settings-current-ver-display">v2.0.0</span>
+                            </div>
+                        </div>
+                        <div class="p-3.5 bg-pink-50/40 rounded-2xl border border-pink-100 text-xs">
+                            <div class="text-slate-400 text-[11px] font-semibold mb-1">Kênh Phát Hành</div>
+                            <div class="text-slate-800 font-bold text-xs flex items-center space-x-1.5">
+                                <i class="fa-brands fa-github text-slate-700 text-xs"></i>
+                                <span>GitHub Official Release</span>
+                            </div>
+                        </div>
+                        <div class="p-3.5 bg-pink-50/40 rounded-2xl border border-pink-100 text-xs">
+                            <div class="text-slate-400 text-[11px] font-semibold mb-1">Tác Giả & Bản Quyền</div>
+                            <div class="text-slate-800 font-bold text-xs flex items-center space-x-1.5">
+                                <i class="fa-solid fa-shield-halved text-pink-600 text-xs"></i>
+                                <span>Lê Minh Triết - MinhTrietEras</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </main>
@@ -1336,6 +1391,89 @@
                 <button type="button" id="btn-ack-about-modal" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl text-xs font-bold transition-all cursor-pointer">
                     Đã Hiểu
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL 5: THÔNG BÁO CẬP NHẬT PHIÊN BẢN MỚI                       -->
+    <!-- ============================================================== -->
+    <div id="modal-update-dialog" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-pink-200 overflow-hidden my-auto animate-fade-in">
+            <!-- Header -->
+            <div class="px-6 py-5 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white relative">
+                <button type="button" id="btn-close-update-modal" class="absolute top-4 right-4 w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl text-white shadow-inner">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="font-extrabold text-base tracking-wide">Đã Có Phiên Bản Mới!</h3>
+                            <span id="modal-update-tag" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-white text-rose-600 font-mono shadow-sm">v...</span>
+                        </div>
+                        <p class="text-xs text-pink-100 mt-0.5">Trích Xuất Hóa Đơn - Bản phát hành chính thức</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 space-y-4 text-xs text-slate-700">
+                <!-- Comparison Box -->
+                <div class="grid grid-cols-2 gap-3 p-3.5 bg-pink-50/50 rounded-2xl border border-pink-100">
+                    <div>
+                        <div class="text-[11px] text-slate-400 font-medium">Bản hiện tại trên máy:</div>
+                        <div class="font-mono font-bold text-slate-700 text-xs mt-0.5 flex items-center space-x-1.5">
+                            <i class="fa-solid fa-laptop text-slate-400"></i>
+                            <span id="modal-update-current-ver">v2.0.0</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-[11px] text-slate-400 font-medium">Bản mới phát hành:</div>
+                        <div class="font-mono font-extrabold text-pink-700 text-xs mt-0.5 flex items-center space-x-1.5">
+                            <i class="fa-solid fa-cloud-arrow-down text-pink-600"></i>
+                            <span id="modal-update-latest-ver">v...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Release Notes / Changes -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
+                            <i class="fa-solid fa-list-check text-pink-500"></i>
+                            <span>Điểm mới trong bản này:</span>
+                        </span>
+                        <span id="modal-update-date" class="text-[10px] text-slate-400">Ngày phát hành: ...</span>
+                    </div>
+                    <div id="modal-update-notes" class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl max-h-48 overflow-y-auto font-mono text-[11px] leading-relaxed text-slate-700 whitespace-pre-wrap">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <div class="p-3 bg-pink-50/60 rounded-xl border border-pink-100 text-[11px] text-slate-600 flex items-start space-x-2">
+                    <i class="fa-solid fa-circle-info text-pink-500 mt-0.5 shrink-0"></i>
+                    <span>Bạn chỉ cần bấm nút <strong>Tải Bản Mới (.exe)</strong> bên dưới để tải trực tiếp phiên bản cập nhật về máy.</span>
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <button type="button" id="btn-update-open-github" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors flex items-center justify-center space-x-1.5 cursor-pointer">
+                    <i class="fa-brands fa-github text-slate-800 text-sm"></i>
+                    <span>Xem trên GitHub</span>
+                </button>
+                <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                    <button type="button" id="btn-dismiss-update-modal" class="px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-200 transition-colors cursor-pointer">
+                        Để Sau
+                    </button>
+                    <button type="button" id="btn-download-new-version" class="px-5 py-2.5 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl text-xs font-extrabold shadow-lg shadow-pink-500/25 transition-all flex items-center justify-center space-x-2 cursor-pointer transform hover:scale-[1.02]">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Tải Bản Mới (.exe)</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

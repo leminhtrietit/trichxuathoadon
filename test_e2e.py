@@ -94,6 +94,22 @@ def run_tests():
     client.post('/api/settings', json={'theme': 'rose'})
     print('Test 5: Settings & Material 3 Theme API OK')
 
+    # 6. Test In-App Update Checker API & SemVer comparator
+    from app import compare_versions
+    assert compare_versions('2.1.0', '2.0.0') == 1, '2.1.0 should be > 2.0.0'
+    assert compare_versions('2.0.0', '2.0.0') == 0, '2.0.0 should be == 2.0.0'
+    assert compare_versions('1.9.9', '2.0.0') == -1, '1.9.9 should be < 2.0.0'
+    assert compare_versions('v2.0.1', '2.0.0') == 1, 'v2.0.1 should be > 2.0.0'
+
+    res_update = client.get('/api/check-update')
+    assert res_update.status_code == 200, f'Check update failed with {res_update.status_code}: {res_update.get_json()}'
+    update_data = res_update.get_json()
+    assert update_data.get('success') is True, 'Check update API returned success: False'
+    assert 'current_version' in update_data, 'Missing current_version'
+    assert 'latest_version' in update_data, 'Missing latest_version'
+    assert 'has_update' in update_data, 'Missing has_update'
+    print(f'Test 6: In-App Update Checker API OK. Current={update_data["current_version"]}, Latest={update_data["latest_version"]}, HasUpdate={update_data["has_update"]}')
+
     print('>>> ALL TESTS PASSED SUCCESSFULLY! <<<')
 
 if __name__ == '__main__':

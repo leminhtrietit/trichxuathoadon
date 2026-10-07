@@ -31,8 +31,9 @@ $RECYCLE.BIN/
 *.log
 *.tmp
 
-# PyInstaller
+# PyInstaller & Binaries
 build/
 dist/
 *.spec
 *.exe
+*.zip
