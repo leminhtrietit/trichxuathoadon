@@ -12,10 +12,12 @@ def startup_html():
     """Màn hình chờ độc lập, không cần mạng hay máy chủ Flask."""
     root = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent))
     logo = base64.b64encode((root / 'static/images/logo.png').read_bytes()).decode('ascii')
+    app_logo = base64.b64encode((root / 'static/images/app-logo.png').read_bytes()).decode('ascii')
     css = (root / 'static/css/startup.css').read_text(encoding='utf-8')
     markup = (root / 'templates/startup.html').read_text(encoding='utf-8')
     from config import APP_VERSION
     markup = markup.replace('{{ app_version }}', APP_VERSION)
+    markup = markup.replace('/static/images/app-logo.png', f'data:image/png;base64,{app_logo}')
     markup = markup.replace('/static/images/logo.png', f'data:image/png;base64,{logo}')
     return f'<!doctype html><html lang="vi"><head><meta charset="utf-8"><style>{css}</style></head><body>{markup}</body></html>'
 

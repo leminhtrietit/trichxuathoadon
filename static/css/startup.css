@@ -7,3 +7,6 @@
 .startup-powered img { width:140px; height:auto; object-fit:contain; }
 .startup-screen.is-ready { opacity:0; pointer-events:none; }
 @media(prefers-reduced-motion:reduce) { .startup-screen { transition:none; } }
+
+.startup-app-logo { display:block; width:112px; height:112px; object-fit:contain; margin:0 auto 18px; }
+@media(max-height:560px) { .startup-identity { transform:translateY(-30px); } .startup-app-logo { width:72px; height:72px; margin-bottom:12px; } .startup-powered { bottom:24px; } }

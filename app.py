@@ -61,13 +61,17 @@ else:
 
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB cho phép upload nhiều file
 
+from terms import TERMS_VERSION, TERMS_SECTIONS
+
 SETTINGS_FILE = os.path.join(config.DATA_DIR, 'app_settings.json')
 
 def load_user_settings():
     """Đọc cấu hình người dùng (theme, đường dẫn excel) đã lưu"""
     default_settings = {
         'theme': 'rose',
-        'excel_path': config.DEFAULT_EXCEL_PATH
+        'excel_path': config.DEFAULT_EXCEL_PATH,
+        'setup_completed': False,
+        'sidebar_collapsed': False
     }
     if os.path.exists(SETTINGS_FILE):
         try:
@@ -80,17 +84,29 @@ def load_user_settings():
     return default_settings
 
 def save_user_settings(settings):
-    """Ghi cấu hình người dùng xuống đĩa để ghi nhớ vĩnh viễn"""
+    """Thay cấu hình nguyên tử; không báo thành công khi không ghi được."""
+    import tempfile
+    temporary_path = None
     try:
-        with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
-            json.dump(settings, f, ensure_ascii=False, indent=2)
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=os.path.dirname(SETTINGS_FILE),
+                                         prefix='settings-', suffix='.tmp', delete=False) as file:
+            temporary_path = file.name
+            json.dump(settings, file, ensure_ascii=False, indent=2)
+        os.replace(temporary_path, SETTINGS_FILE)
         return True
     except Exception:
         return False
+    finally:
+        if temporary_path and os.path.exists(temporary_path):
+            os.remove(temporary_path)
+
+
+def setup_required(settings):
+    return not (settings.get('setup_completed') is True and settings.get('accepted_terms_version') == TERMS_VERSION)
 
 _initial_settings = load_user_settings()
 current_excel_path = _initial_settings.get('excel_path', config.DEFAULT_EXCEL_PATH)
-if not os.path.exists(current_excel_path):
+if not setup_required(_initial_settings) and not os.path.exists(current_excel_path):
     ensure_excel_file(current_excel_path).close()
 
 @app.after_request
@@ -107,7 +123,7 @@ def add_tracking_headers(response):
 
 @app.route('/')
 def index():
-    return render_template('index.html', app_version=config.APP_VERSION)
+    return render_template('index.html', app_version=config.APP_VERSION, terms_version=TERMS_VERSION, terms_sections=TERMS_SECTIONS)
 
 @app.route('/api/status', methods=['GET'])
 def get_status():
@@ -519,6 +535,49 @@ def init_excel_file_api():
     else:
         return jsonify(res), 500
 
+@app.route('/api/onboarding', methods=['GET', 'POST'])
+def onboarding():
+    global current_excel_path
+    settings = load_user_settings()
+    if request.method == 'GET':
+        return jsonify({'success': True, 'required': setup_required(settings), 'terms_version': TERMS_VERSION,
+                        'settings': settings})
+    data = request.get_json() or {}
+    if data.get('accepted_terms') is not True or data.get('terms_version') != TERMS_VERSION:
+        return jsonify({'success': False, 'error': 'Vui lòng chấp nhận phiên bản điều khoản hiện tại.'}), 400
+    theme = data.get('theme')
+    if theme not in ['rose', 'purple', 'blue', 'green', 'amber', 'teal', 'red', 'slate']:
+        return jsonify({'success': False, 'error': 'Vui lòng chọn màu giao diện hợp lệ.'}), 400
+    path = str(data.get('excel_path') or '').strip()
+    if not path or not os.path.isabs(path) or not path.lower().endswith('.xlsx'):
+        return jsonify({'success': False, 'error': 'Chọn đường dẫn đầy đủ đến file Excel .xlsx.'}), 400
+    path = os.path.normpath(path)
+    try:
+        if os.path.exists(path):
+            summary = read_excel_summary(path)
+            if summary.get('error'):
+                raise ValueError('File Excel hiện có không đọc được; hãy chọn file khác. File cũ được giữ nguyên.')
+            # Không chuyển sang workbook khác không có sheet dữ liệu của ứng dụng.
+            import openpyxl
+            workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
+            try:
+                if 'TongHopHoaDon' not in workbook.sheetnames:
+                    raise ValueError('File đã có không phải sổ hóa đơn của ứng dụng. Hãy chọn tên file mới.')
+            finally:
+                workbook.close()
+        else:
+            ensure_excel_file(path).close()
+        from datetime import datetime, timezone
+        settings.update({'excel_path': path, 'theme': theme, 'setup_completed': True,
+                         'accepted_terms_version': TERMS_VERSION,
+                         'accepted_terms_at': datetime.now(timezone.utc).isoformat()})
+        if not save_user_settings(settings):
+            return jsonify({'success': False, 'error': 'Không lưu được cấu hình. Kiểm tra quyền ghi và thử lại.'}), 500
+        current_excel_path = path
+        return jsonify({'success': True, 'excel_path': path, 'settings': settings})
+    except Exception as exc:
+        return jsonify({'success': False, 'error': str(exc)}), 400
+
 @app.route('/api/settings', methods=['GET', 'POST'])
 def handle_settings():
     """Lấy và cập nhật cấu hình người dùng (theme Material 3, excel_path)"""
@@ -536,7 +595,10 @@ def handle_settings():
             if new_p:
                 settings['excel_path'] = new_p
                 current_excel_path = new_p
-        save_user_settings(settings)
+        if 'sidebar_collapsed' in data and isinstance(data['sidebar_collapsed'], bool):
+            settings['sidebar_collapsed'] = data['sidebar_collapsed']
+        if not save_user_settings(settings):
+            return jsonify({'success': False, 'error': 'Không lưu được cấu hình'}), 500
         return jsonify({'success': True, 'settings': settings})
     else:
         return jsonify({'success': True, 'settings': load_user_settings()})

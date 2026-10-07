@@ -4,6 +4,7 @@ Ngày kiểm tra: 07/10/2026. Phạm vi: mã nguồn Flask, PyWebView, đọc/gh
 
 ## Những thay đổi đã hoàn thành
 
+- Bổ sung v2.0.4: logo app được nhúng trong màn hình chờ; thiết lập lần đầu chọn output/màu và chấp nhận điều khoản, không tạo workbook trước lựa chọn. Sidebar thu gọn giữ icon và ghi nhớ. Cấu hình thay nguyên tử; cơ chế ghi Excel vẫn chưa có khóa/thay nguyên tử (mục tồn đọng). 17 test backend và ba bộ UI trên dữ liệu tạm đã đạt; cả ba bộ UI cũng đạt trên `.exe` v2.0.4, gồm thiết lập/đồng ý, ghi nhớ sidebar, quét/lưu và xem không thay đổi Excel.
 - Bổ sung v2.0.3: thu gọn chọn màu/sidebar, thêm API chỉ đọc hóa đơn và sản phẩm đã lưu; không đọc sheet chi tiết trong khởi động mà chỉ khi người dùng mở xem. 12 test backend và hai bộ UI trên mã nguồn/bản `.exe` đều đạt; hash workbook giữ nguyên sau xem. Các bảng vẫn chưa phân trang.
 - Bổ sung v2.0.2: đã tái hiện và sửa lỗi `null.classList` sau quét do tham chiếu tới thanh tác vụ HTML cũ; sửa trường tổng thanh toán trong popup và đếm mặt hàng về 0 khi preview trống. Kiểm tra UI với API thật và dữ liệu tạm đã đạt cho quét/lưu/ghi đè/upload/thư mục trống.
 
@@ -26,7 +27,7 @@ Benchmark dùng workbook tổng hợp tự sinh, mỗi hóa đơn có 5 dòng h�
 | 1.000 / 5.000 | 2,716 giây | 0,722 giây | 0,055 giây |
 | 10.000 / 50.000 | 20,111 giây | 7,745 giây | 0,091 giây |
 
-Bản `.exe` cũ: 46.173.169 byte; bản v2.0.3: 27.195.682 byte, giảm khoảng 41%. Dung lượng này phụ thuộc môi trường đóng gói.
+Bản `.exe` cũ: 46.173.169 byte; bản v2.0.4: 27.204.728 byte, giảm khoảng 41%. Dung lượng này phụ thuộc môi trường đóng gói.
 
 Chạy lại benchmark từ thư mục dự án: `python benchmarks/benchmark_summary.py`. Kết quả lưu ở `build/benchmark-results.json`.
 
@@ -56,7 +57,7 @@ Thứ tự đề xuất: sửa thuế XML và escape dữ liệu giao diện; b�
 - PyWebView/WebView2 thật với cửa sổ kiểm thử ẩn và dữ liệu tạm: màn hình chờ chuyển được tới giao diện, dữ liệu tải xong và cửa sổ đóng được.
 - PyInstaller đóng gói v2.0.2 thành công `dist/v2.0.2/TrichXuatHoaDon.exe`. Đã chạy trực tiếp bản đóng gói với dữ liệu tạm: API báo v2.0.2, tài nguyên HTML/CSS/JS/font trả HTTP 200 và workbook nằm trong thư mục cô lập. Bản `.exe` đã chạy trực tiếp UI hồi quy quét/lưu/ghi đè/upload/xóa preview/thư mục trống và đạt. Chưa đo thời gian khởi động hoặc kiểm thử toàn bộ các thao tác khác/mọi mẫu hóa đơn.
 
-Mở **`dist/v2.0.3/TrichXuatHoaDon.exe`** để dùng bản mới. ZIP mới: `dist/TrichXuatHoaDon-v2.0.3-Windows.zip`. File `.exe` và ZIP v2.0.0 cũ ở thư mục gốc chưa được thay thế. Nếu workbook cũ không tự được chọn, chọn lại file đó trong Cài Đặt; không có bước chuyển dữ liệu tự động từ thư mục tạm của bản cũ.
+Mở **`dist/v2.0.4/TrichXuatHoaDon.exe`** để dùng bản mới. ZIP mới: `dist/TrichXuatHoaDon-v2.0.4-Windows.zip`. File `.exe` và ZIP v2.0.0 cũ ở thư mục gốc chưa được thay thế. Nếu workbook cũ không tự được chọn, chọn lại file đó trong Cài Đặt; không có bước chuyển dữ liệu tự động từ thư mục tạm của bản cũ.
 
 Màn hình chờ hiện từ lúc cửa sổ WebView được tạo. Bản `--onefile` vẫn cần giải nén trước thời điểm này; muốn có logo ngay trong giai đoạn giải nén cần bổ sung splash ở bootloader hoặc chuyển sang bản `onedir`.
 

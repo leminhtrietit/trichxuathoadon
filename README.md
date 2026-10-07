@@ -24,11 +24,18 @@
 
 Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng hợp theo nhà cung cấp và kỳ kê khai thuế, cùng bộ lọc trên giao diện ứng dụng.
 
-## Thực trạng dự án — v2.0.3, cập nhật 07/10/2026
+## Thực trạng dự án — v2.0.4, cập nhật 07/10/2026
 
 **Quy tắc dành cho các agent:** đọc mục này và [AGENTS.md](AGENTS.md) trước khi làm việc. Sau mỗi đợt thay đổi đáng kể, cập nhật README ngay trong cùng đợt làm việc: phần đã hoàn thành, lỗi còn tồn đọng, kết quả kiểm thử và bản đóng gói. README là nơi tra cứu thực trạng hiện tại; báo cáo chi tiết không thay thế việc cập nhật README.
 
 ### Đã hoàn thành
+
+- **v2.0.4 màn hình chờ:** tên app → logo ứng dụng → phiên bản; phía dưới vẫn “powered by” kèm logo tác giả, không thêm card. Desktop nhúng cả hai logo để hiện trước khi Flask khởi động.
+- **Thiết lập lần đầu:** chọn file Excel kết quả (vị trí + tên `.xlsx`) và 1 trong 8 màu; màu được xem trước, chưa ghi cấu hình khi chưa chấp nhận. Bấm “Chấp nhận và bắt đầu” sau khi tích đồng ý điều khoản mới hoàn tất. API kiểm tra đồng ý rõ ràng, đúng phiên bản điều khoản, màu và đường dẫn đầy đủ. File mới được tạo tại vị trí chọn; file sổ hóa đơn đã có chỉ được đọc để kiểm tra, không xóa/khởi tạo lại. File hỏng hoặc workbook không có sheet hóa đơn bị từ chối. Không tự tạo workbook mặc định trước thiết lập lần đầu.
+- **Ghi nhớ trên máy:** `app_settings.json` giữ `setup_completed`, `accepted_terms_version`, `accepted_terms_at` (UTC), nơi lưu, màu và `sidebar_collapsed`. Chỉ đánh dấu xong khi ghi cấu hình thành công; cấu hình thay qua file tạm/nguyên tử. Khi mở lại không hỏi lần nữa; đổi phiên bản điều khoản sẽ yêu cầu xem/chấp nhận lại. Người dùng từ bản cũ được điền sẵn đường dẫn/màu đã dùng, hỏi một lần và giữ workbook cũ.
+- **Điều khoản:** [TERMS_OF_USE.md](TERMS_OF_USE.md) mô tả mục đích app, quyền sử dụng theo MIT hiện có, xử lý tại máy/kết nối cập nhật, trách nhiệm đối chiếu/sao lưu và giới hạn bảo đảm theo pháp luật áp dụng. Nội dung UI lấy chung từ `terms.py` qua `templates/terms.html`; khi sửa nội dung, tăng `TERMS_VERSION` và đồng bộ tài liệu Markdown. Có nút xem lại trong Cài đặt. Chấp nhận không được gửi về tác giả.
+- **Sidebar:** nút biểu tượng menu ở header thu gọn/mở rộng; dạng gọn rộng 76 px giữ icon, tooltip và nhãn trợ năng. Trạng thái lưu trong cấu hình, hoạt động sau mở lại. Popup thiết lập/điều khoản giữ focus bàn phím và vô hiệu hóa phần nền; Escape không bỏ qua bước đồng ý.
+
 
 - **v2.0.3 giao diện:** sidebar theo thứ tự **Trích xuất hóa đơn → Tổng quan → Danh sách hóa đơn → Chi tiết hóa đơn**; Cài đặt vẫn ở cuối. Phần “Giao diện” trong Cài đặt dùng 8 nút màu nhỏ, bỏ tiêu đề lớn, mô tả dài và mã màu.
 - **Xem hóa đơn chỉ đọc:** bấm dòng hóa đơn đã lưu (hoặc Enter/Space) để mở thông tin chung, bên bán/mua, sản phẩm, thuế, thanh toán và file nguồn. API GET `/api/invoice-details` đọc hai sheet bằng `read_only=True`, không khởi tạo/lưu Excel. Những trường workbook không lưu (điện thoại/email/chữ ký/tiền tệ...) không được suy đoán; dữ liệu vừa quét vẫn hiển thị các trường parser có. Bỏ nhãn chữ ký “hợp lệ” vì app không xác minh chữ ký số.
@@ -40,13 +47,13 @@ Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng 
 
 - Logo ứng dụng riêng theo ý tưởng “hóa đơn → bảng dữ liệu”, xanh chàm/xanh ngọc, nền trong suốt, không có chữ. Master PNG: `static/images/app-logo.png`; icon Windows đa kích thước: `static/images/app-icon.ico` (16, 24, 32, 48, 64, 128, 256 px). Dùng cho favicon, sidebar, cửa sổ giới thiệu, icon `.exe` và cửa sổ/taskbar Desktop. Logo tác giả ở “powered by” vẫn là `static/images/logo.png`. Xem [thiết kế và prompt](docs/APP_LOGO.md).
 
-- Màn hình chờ chỉ hiển thị tên app lớn phía trên, phiên bản bên dưới và dòng “powered by” kèm logo phía dưới; không có card, thanh chuyển động hay nội dung phụ. Nền xanh tím nhẹ được giữ lại. Desktop hiển thị màn hình chờ trước khi nạp Flask/parser/Excel; giao diện web bỏ lớp chờ sau khi các yêu cầu dữ liệu ban đầu kết thúc, có cơ chế thoát sau 15 giây nếu bị treo.
+- Màn hình chờ hiển thị tên app lớn phía trên, logo ứng dụng và phiên bản bên dưới, cùng dòng “powered by” kèm logo tác giả phía dưới; không có card, thanh chuyển động hay nội dung phụ. Nền xanh tím nhẹ được giữ lại. Desktop hiển thị màn hình chờ trước khi nạp Flask/parser/Excel; giao diện web bỏ lớp chờ sau khi các yêu cầu dữ liệu ban đầu kết thúc, có cơ chế thoát sau 15 giây nếu bị treo.
 - Bỏ đọc Excel lúc import app nếu file đã tồn tại; đọc tổng hợp bằng streaming và cache theo thay đổi file. Các yêu cầu đọc đồng thời dùng chung kết quả; sửa file bên ngoài hoặc lưu/xóa dữ liệu làm cache cập nhật lại.
 - Dùng cổng do hệ điều hành cấp cho Desktop, bỏ vòng lặp chờ bằng API thống kê. Tái sử dụng bộ định dạng số ở frontend.
 - Đóng gói Tailwind CSS và Font Awesome tại máy, không tải CDN cho giao diện; dùng font hệ thống.
 - Bản `.exe` lưu cấu hình và workbook mặc định vào `%LOCALAPPDATA%\MinhTrietEras\TrichXuatHoaDon\data`; đường dẫn Excel riêng vẫn do người dùng chọn. Chạy từ mã nguồn dùng thư mục `data` của dự án.
 - Chặn ghi đè workbook hiện có nhưng không đọc được; thông báo lỗi đọc Excel trên giao diện. Quét thư mục chỉ đánh dấu đã lưu khi lưu thành công.
-- Loại thư viện tùy chọn không dùng khỏi bản đóng gói; bản mới nằm ở **`dist/v2.0.3/TrichXuatHoaDon.exe`**. ZIP mới: `dist/TrichXuatHoaDon-v2.0.3-Windows.zip`. Các file `.exe`/ZIP v2.0.0, v2.0.1 và v2.0.2 vẫn là bản cũ; mở đúng bản v2.0.3 để dùng bản sửa lỗi; chưa có bước chuyển dữ liệu tự động từ bản cũ.
+- Loại thư viện tùy chọn không dùng khỏi bản đóng gói; bản mới nằm ở **`dist/v2.0.4/TrichXuatHoaDon.exe`**. ZIP mới: `dist/TrichXuatHoaDon-v2.0.4-Windows.zip`. Các file `.exe`/ZIP v2.0.0, v2.0.1, v2.0.2 và v2.0.3 vẫn là bản cũ; mở đúng bản v2.0.4 để dùng bản sửa lỗi; chưa có bước chuyển dữ liệu tự động từ bản cũ.
 
 ### Hiệu năng đã đo
 
@@ -57,7 +64,7 @@ Workbook tự sinh, mỗi hóa đơn có 5 dòng hàng hóa; mỗi cấu hình �
 | 1.000 / 5.000 | 2,716 giây | 0,722 giây | 0,055 giây |
 | 10.000 / 50.000 | 20,111 giây | 7,745 giây | 0,091 giây |
 
-Bản `.exe` cũ khoảng **46,2 MB**, bản v2.0.3 khoảng **27,2 MB**. Chạy lại số đo bằng `python benchmarks/benchmark_summary.py`; kết quả xuất vào `build/benchmark-results.json`. Script cố định mốc trước tối ưu ở commit `5c90279`, giữ nguyên mốc so sánh sau khi commit các thay đổi mới.
+Bản `.exe` cũ khoảng **46,2 MB**, bản v2.0.4 khoảng **27,2 MB**. Chạy lại số đo bằng `python benchmarks/benchmark_summary.py`; kết quả xuất vào `build/benchmark-results.json`. Script cố định mốc trước tối ưu ở commit `5c90279`, giữ nguyên mốc so sánh sau khi commit các thay đổi mới.
 
 ### Lỗi và giới hạn chưa sửa
 
@@ -79,19 +86,23 @@ P1 là các mục nên sửa sớm. P2 là các cải tiến tiếp theo. Danh s
 
 ### Phạm vi đã kiểm thử và tình trạng bản đóng gói
 
+- v2.0.4: 5 test backend mới kiểm tra đồng ý/phiên bản điều khoản/màu/đường dẫn, ghi nhớ, nhận cấu hình cũ không đổi workbook, từ chối file hỏng và không đánh dấu hoàn tất khi ghi cấu hình thất bại. UI `tests/onboarding_ui.cjs` trên dữ liệu tạm đạt: lần đầu chưa tạo Excel, màu preview chưa lưu, hủy chọn file, đường dẫn lỗi, đồng ý rồi lưu đúng nơi chọn, mở lại không hỏi, thu gọn/mở rộng/điều hướng sidebar và xem lại điều khoản. Ba bộ UI quét/xem/thiết lập đều đạt trên mã nguồn. Ảnh minh họa: [thiết lập lần đầu](docs/first-run-preview.png) và [màn hình chờ](docs/startup-preview.png).
+
+
 - v2.0.3: kiểm tra UI `tests/invoice_view_ui.cjs` trên Edge headless đạt: tên/thứ tự sidebar, bấm dòng và mở bằng bàn phím, dữ liệu bên bán/mua/sản phẩm/tổng tiền, sản phẩm đã lưu sau tải lại trang, bỏ đúng 2 cột, chọn màu gọn tại 1320×860 và 1024×680. Hash SHA-256 workbook trước/sau xem giống nhau và không phát sinh yêu cầu ghi/xóa/khởi tạo Excel. Ba test backend mới kiểm tra chỉ đọc, tách sản phẩm đúng MST khi cùng số HĐ/ký hiệu, header đảo thứ tự, workbook thiếu/hỏng không bị tạo/ghi lại.
 
 
-- **12/12 test đạt:** `python -m unittest test_startup_performance tests.test_invoice_details -v`. Các test dùng thư mục tạm, kiểm tra cache, đọc đồng thời, sửa file bên ngoài, save/clear, chống trùng/replace, bảo toàn file hỏng, workbook thiếu dimension metadata, API và tài nguyên màn hình chờ.
+- **17/17 test đạt:** `python -m unittest test_startup_performance tests.test_invoice_details tests.test_onboarding -v`. Các test dùng thư mục tạm, kiểm tra cache, đọc đồng thời, sửa file bên ngoài, save/clear, chống trùng/replace, bảo toàn file hỏng, workbook thiếu dimension metadata, API và tài nguyên màn hình chờ.
 - Kiểm tra UI bổ sung `tests/scan_ui_regression.cjs` trên Edge headless đạt: quét mới, tổng tiền đúng, lưu, quét trùng/ghi đè, upload, xóa preview, thư mục trống; không có lỗi JavaScript. Máy chủ fixture `tests/ui_fixture_server.py` cô lập toàn bộ file/cấu hình trong thư mục tạm; script UI xác minh workbook nằm trong fixture trước khi thao tác.
 - Kiểm tra cú pháp Python/JavaScript và `git diff --check` đạt.
 - Edge headless đã mở giao diện với tài nguyên bên ngoài bị chặn, chuyển tab, đổi theme và xác nhận lớp chờ biến mất; không có lỗi JavaScript. Ảnh màn hình chờ được lưu tại [docs/startup-preview.png](docs/startup-preview.png); ảnh kiểm tra bổ sung ở `build/screens/`.
-- Bản điều chỉnh màn hình chờ đã được xem ở 1320×860 và 1024×680; nội dung hiển thị đúng ba phần: tên app, v2.0.3, “powered by” kèm logo. Logo không có nền/card/viền bao quanh. Phiên bản của màn hình chờ lấy từ `config.APP_VERSION` ở cả Desktop và Web.
+- Bản điều chỉnh màn hình chờ đã được xem ở 1320×860 và 1024×680; nội dung hiển thị đúng tên app, logo ứng dụng, v2.0.4, “powered by” kèm logo tác giả. Logo không có nền/card/viền bao quanh. Phiên bản của màn hình chờ lấy từ `config.APP_VERSION` ở cả Desktop và Web.
 - Logo mới đã được xác minh alpha trong suốt và đủ 7 kích thước ICO. Kiểm tra cửa sổ WebView2 ẩn đã nạp icon mới thực tế ở 32×32 px; icon `.exe` dùng cùng tài nguyên. Đã kiểm tra tài nguyên PE của `.exe` có đủ 7 kích thước; bản đóng gói mới đã phục vụ đúng PNG/ICO qua HTTP trong smoke test.
 - PyWebView/WebView2 thật với cửa sổ ẩn và dữ liệu tạm đã chuyển từ màn hình chờ vào giao diện rồi đóng thành công.
 - PyInstaller đã đóng gói **v2.0.2** thành công. Đã chạy trực tiếp file `.exe` với thư mục dữ liệu tạm: API báo đúng phiên bản, tài nguyên giao diện trả HTTP 200, đường dẫn Excel nằm trong thư mục cô lập. Bản xuất lại cũng đã xác nhận HTML màn hình chờ có “powered by”, không còn card/thanh chờ. Bản `.exe` v2.0.2 cũng đã chạy trực tiếp bộ UI hồi quy quét/lưu/ghi đè/upload/xóa preview/thư mục trống và đạt. Đây là kiểm tra khởi động/backend/tài nguyên và các luồng UI nêu trên; chưa kiểm thử toàn bộ thao tác giao diện hoặc mọi mẫu PDF/XML trên bản đóng gói, chưa đo thời gian khởi động toàn app.
 - PyInstaller v2.0.3 đã đóng gói thành công, `.exe` 27.195.682 byte. Đã chạy trực tiếp bản mới với `%LOCALAPPDATA%` tạm, xác minh phiên bản/tài nguyên giao diện/cấu hình cô lập, rồi chạy cả `scan_ui_regression.cjs` và `invoice_view_ui.cjs` trên backend của `.exe`: tất cả đạt; SHA-256 workbook giữ nguyên khi xem hóa đơn. Chưa kiểm thử mọi mẫu PDF/XML hoặc toàn bộ thao tác ứng dụng.
-- Bản bàn giao gồm `dist/v2.0.3/TrichXuatHoaDon.exe` và `dist/TrichXuatHoaDon-v2.0.3-Windows.zip`, kèm ghi chú [RELEASE_NOTES_v2.0.3.md](RELEASE_NOTES_v2.0.3.md). Nhánh bàn giao mã nguồn: `main` tại `origin` (`leminhtrietit/trichxuathoadon`). Chưa xuất bản GitHub Release v2.0.3; binary/ZIP không đưa vào Git.
+- PyInstaller v2.0.4 đã đóng gói thành công, `.exe` 27.204.728 byte. Đã chạy trực tiếp bản cuối với `%LOCALAPPDATA%` tạm: API đúng phiên bản, tài nguyên đầy đủ, cả ba bộ UI thiết lập/quét/xem đều đạt; có kiểm tra focus sau chấp nhận và vòng Tab trong popup. Bản đóng gói xác nhận lần đầu chưa tự tạo Excel, cấu hình và chấp nhận được nhớ, sidebar dùng được sau mở lại; workbook giữ nguyên SHA-256 khi chỉ xem. Chưa kiểm thử mọi mẫu hóa đơn, mọi thao tác hoặc đo thời gian khởi động toàn app.
+- Bản bàn giao gồm `dist/v2.0.4/TrichXuatHoaDon.exe` và `dist/TrichXuatHoaDon-v2.0.4-Windows.zip`, kèm ghi chú [RELEASE_NOTES_v2.0.4.md](RELEASE_NOTES_v2.0.4.md). Nhánh bàn giao mã nguồn: `main` tại `origin` (`leminhtrietit/trichxuathoadon`). Chưa xuất bản GitHub Release v2.0.4; binary/ZIP không đưa vào Git.
 - Màn hình chờ xuất hiện khi cửa sổ WebView được tạo. Bản `--onefile` vẫn giải nén trước thời điểm đó; chưa có splash ở bootloader.
 
 ---
@@ -162,18 +173,18 @@ Mở trình duyệt truy cập: **`http://localhost:5000`**
 
 ### Màn hình khởi động và giao diện offline
 
-Ứng dụng Desktop hiển thị logo MinhTrietEras trong lúc nạp máy chủ và dữ liệu. Giao diện dùng CSS và icon đóng gói sẵn, không tải CDN khi mở app. Khi chạy bản `.exe`, cấu hình và Excel mặc định được lưu tại `%LOCALAPPDATA%\MinhTrietEras\TrichXuatHoaDon\data`; file Excel do người dùng chọn vẫn ở vị trí đã chọn.
+Ứng dụng Desktop hiển thị logo app và logo tác giả trong lúc nạp máy chủ và dữ liệu. Lần đầu dùng, chọn nơi lưu Excel, màu và chấp nhận điều khoản; những lần sau bỏ qua bước này. Nút menu trên header cho phép thu gọn sidebar. Giao diện dùng CSS và icon đóng gói sẵn, không tải CDN khi mở app. Khi chạy bản `.exe`, cấu hình và Excel mặc định được lưu tại `%LOCALAPPDATA%\MinhTrietEras\TrichXuatHoaDon\data`; file Excel do người dùng chọn vẫn ở vị trí đã chọn.
 
 Sau khi thay đổi các class giao diện, biên dịch lại CSS trước khi đóng gói:
 
 ```powershell
 npx --yes tailwindcss@3.4.17 -c tailwind.config.cjs -i static/css/tailwind.input.css -o static/css/tailwind.css --minify
-python -m unittest test_startup_performance tests.test_invoice_details -v
+python -m unittest test_startup_performance tests.test_invoice_details tests.test_onboarding -v
 ```
 
-Kiểm tra UI cần Node.js tìm được package `playwright` và Microsoft Edge. Chạy `python tests/ui_fixture_server.py` ở terminal thứ nhất, rồi `node tests/scan_ui_regression.cjs` và `node tests/invoice_view_ui.cjs` ở terminal thứ hai. Trong Codex có thể dùng package Playwright của runtime bundled qua `NODE_PATH`; không chạy kiểm tra này trên máy chủ ứng dụng chứa dữ liệu thật.
+Kiểm tra UI cần Node.js tìm được package `playwright` và Microsoft Edge. Chạy `python tests/ui_fixture_server.py` ở terminal thứ nhất, rồi lần lượt `node tests/onboarding_ui.cjs`, `node tests/scan_ui_regression.cjs` và `node tests/invoice_view_ui.cjs` ở terminal thứ hai. Trong Codex có thể dùng package Playwright của runtime bundled qua `NODE_PATH`; không chạy kiểm tra này trên máy chủ ứng dụng chứa dữ liệu thật.
 
-Chạy `build_exe.bat` để tạo `dist\v2.0.3\TrichXuatHoaDon.exe`. Node.js chỉ cần khi biên dịch CSS hoặc chạy kiểm tra UI; người sử dụng `.exe` không cần Node.js hoặc Python. Các kiểm tra mới dùng thư mục tạm để không thay đổi dữ liệu và cấu hình thật.
+Chạy `build_exe.bat` để tạo `dist\v2.0.4\TrichXuatHoaDon.exe`. Node.js chỉ cần khi biên dịch CSS hoặc chạy kiểm tra UI; người sử dụng `.exe` không cần Node.js hoặc Python. Các kiểm tra mới dùng thư mục tạm để không thay đổi dữ liệu và cấu hình thật.
 
 ```
 trichxuathoadon/

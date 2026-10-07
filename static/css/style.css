@@ -340,3 +340,19 @@ body, aside, header, main, .nav-tab, .bg-white, .rounded-3xl, .rounded-2xl {
         border: none !important;
     }
 }
+
+/* Sidebar thu gọn giữ icon, nhãn trợ năng và nút mở rộng ở header. */
+#app-sidebar { transition:width .18s ease; }
+#app-sidebar.sidebar-collapsed { width:76px; }
+.sidebar-collapsed .sidebar-brand { padding:16px; }
+.sidebar-collapsed .sidebar-brand-text,
+.sidebar-collapsed .sidebar-menu-label,
+.sidebar-collapsed .nav-tab span,
+.sidebar-collapsed .nav-tab > i,
+.sidebar-collapsed a,
+.sidebar-collapsed #btn-sidebar-check-update { display:none; }
+.sidebar-collapsed .nav-tab { padding:10px; justify-content:center; }
+.sidebar-collapsed .nav-tab > div { margin:0; }
+.sidebar-collapsed .nav-tab > div > div { margin:0; }
+.sidebar-collapsed .nav-tab > div > span { margin:0; }
+@media(prefers-reduced-motion:reduce) { #app-sidebar { transition:none; } }

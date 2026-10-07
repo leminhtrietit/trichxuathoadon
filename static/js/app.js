@@ -5,6 +5,7 @@
 
 // Trạng thái ứng dụng
 const state = {
+    setupRequired: true,
     parsedInvoices: [],
     lastExtractionData: null,
     selectedUploadFiles: [],
@@ -24,6 +25,7 @@ const state = {
 // Khởi chạy khi tài liệu sẵn sàng
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+        initSidebar();
         initThemeSystem();
         initTabs();
         initExtractionModals();
@@ -37,6 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initInvoiceModal();
         initAboutModal();
         initUpdateChecker();
+        await loadOnboarding();
         await Promise.allSettled([loadAppStatus(), loadExcelData()]);
     } finally {
         clearTimeout(window.startupFallback);
@@ -876,7 +879,7 @@ function initUpdateChecker() {
 
     // Tự động kiểm tra bản cập nhật ngầm sau 2.5s khi mở app
     setTimeout(() => {
-        checkAppUpdate(false);
+        if (!state.setupRequired) checkAppUpdate(false);
     }, 2500);
 }
 
@@ -1334,7 +1337,7 @@ async function loadAppStatus() {
         if (inputPath) inputPath.value = data.excel_path;
 
         if (data.theme && !localStorage.getItem('mte_theme')) {
-            applyTheme(data.theme, false);
+            applyTheme(data.theme, false, false);
         }
     } catch (err) {
         console.error('Lỗi khi tải trạng thái:', err);
@@ -1519,7 +1522,7 @@ function getCurrentThemeId() {
     return document.documentElement.getAttribute('data-theme') || localStorage.getItem('mte_theme') || 'rose';
 }
 
-function applyTheme(themeId, notifyUser = false) {
+function applyTheme(themeId, notifyUser = false, persist = true) {
     const theme = M3_THEMES.find(t => t.id === themeId) || M3_THEMES[0];
     const actualId = theme.id;
 
@@ -1532,7 +1535,7 @@ function applyTheme(themeId, notifyUser = false) {
     } catch (e) {}
 
     // 3. Đồng bộ lưu vào file cấu hình backend qua API
-    fetch('/api/settings', {
+    if (persist && !state.setupRequired) fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ theme: actualId })
@@ -1663,7 +1666,7 @@ function initThemeSystem() {
     }
 
     // 3. Áp dụng theme ban đầu
-    applyTheme(currentThemeId, false);
+    applyTheme(currentThemeId, false, false);
 }
 
 // Cấu hình cài đặt & khởi tạo file Excel
@@ -2498,4 +2501,186 @@ function renderPivotTab() {
             });
         }
     }
+}
+
+
+function setSidebarCollapsed(collapsed, persist = false) {
+    const sidebar = document.getElementById('app-sidebar');
+    const button = document.getElementById('btn-toggle-sidebar');
+    sidebar.classList.toggle('sidebar-collapsed', collapsed);
+    button.setAttribute('aria-expanded', String(!collapsed));
+    const label = collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar';
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    try { localStorage.setItem('mte_sidebar_collapsed', String(collapsed)); } catch (err) {}
+    if (persist) fetch('/api/settings', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({sidebar_collapsed:collapsed})
+    }).then(response => {if (!response.ok) showToast('Không lưu được trạng thái sidebar', 'warning');})
+      .catch(() => showToast('Không lưu được trạng thái sidebar', 'warning'));
+}
+
+function initSidebar() {
+    document.querySelectorAll('#app-sidebar .nav-tab').forEach(button => {
+        const name = button.querySelector('div > span').textContent.trim();
+        button.setAttribute('aria-label', name);
+        button.title = name;
+    });
+    let collapsed = false;
+    try { collapsed = localStorage.getItem('mte_sidebar_collapsed') === 'true'; } catch (err) {}
+    setSidebarCollapsed(collapsed);
+    document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+        setSidebarCollapsed(!document.getElementById('app-sidebar').classList.contains('sidebar-collapsed'), true);
+    });
+}
+
+function setAppInert(value) {
+    document.getElementById('app-sidebar').inert = value;
+    document.getElementById('app-content').inert = value;
+}
+
+function trapDialogTab(event, modal) {
+    if (event.key !== 'Tab' || modal.classList.contains('hidden')) return;
+    const focusable = [...modal.querySelectorAll('button, input, select, textarea, a[href], [tabindex="0"], summary')]
+        .filter(element => !element.disabled && element.offsetParent !== null);
+    if (!focusable.length) {event.preventDefault();return;}
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (event.shiftKey && (document.activeElement === first || !modal.contains(document.activeElement))) {
+        event.preventDefault();last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || !modal.contains(document.activeElement))) {
+        event.preventDefault();first.focus();
+    }
+}
+
+let onboardingInitialized = false;
+let onboardingLoaded = false;
+let onboardingSaving = false;
+let onboardingTheme = 'rose';
+
+function updateOnboardingButton() {
+    document.getElementById('btn-onboarding-complete').disabled = !onboardingLoaded || onboardingSaving ||
+        !document.getElementById('onboarding-accept').checked || !document.getElementById('onboarding-path').value.trim();
+}
+
+function onboardingError(message) {
+    const error = document.getElementById('onboarding-error');
+    error.textContent = message;
+    error.classList.toggle('hidden', !message);
+}
+
+function initOnboarding() {
+    if (onboardingInitialized) return;
+    onboardingInitialized = true;
+    const modal = document.getElementById('onboarding-modal');
+    const choices = document.getElementById('onboarding-themes');
+    choices.innerHTML = M3_THEMES.map(theme => `<label class="flex items-center gap-2 border border-pink-100 rounded-xl px-2 py-2 text-[11px] cursor-pointer text-slate-700">
+        <input type="radio" name="onboarding-theme" value="${theme.id}" class="accent-pink-600">
+        <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${theme.primaryHex}"></span><span>${theme.name}</span>
+    </label>`).join('');
+    choices.addEventListener('change', event => {
+        onboardingTheme = event.target.value;
+        applyTheme(onboardingTheme, false, false);
+    });
+    document.getElementById('onboarding-accept').addEventListener('change', updateOnboardingButton);
+    document.getElementById('onboarding-path').addEventListener('input', updateOnboardingButton);
+    document.getElementById('btn-onboarding-retry').addEventListener('click', loadOnboarding);
+    document.getElementById('btn-onboarding-browse').addEventListener('click', async event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        try {
+            const response = await fetch('/api/select-excel-save-dialog', {method:'POST'});
+            const data = await response.json();
+            if (data.success) document.getElementById('onboarding-path').value = data.filepath;
+            else if (!data.cancelled) throw new Error(data.error || 'Không thể mở hộp thoại chọn file');
+            updateOnboardingButton();
+        } catch (err) {onboardingError(err.message);}
+        finally {button.disabled = false;}
+    });
+    document.getElementById('onboarding-form').addEventListener('submit', async event => {
+        event.preventDefault();
+        if (document.getElementById('btn-onboarding-complete').disabled) return;
+        onboardingSaving = true;
+        updateOnboardingButton();
+        onboardingError('');
+        const inputs = [...modal.querySelectorAll('input, #btn-onboarding-browse')];
+        inputs.forEach(input => input.disabled = true);
+        try {
+            const response = await fetch('/api/onboarding', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({excel_path:document.getElementById('onboarding-path').value.trim(),
+                    theme:onboardingTheme, accepted_terms:document.getElementById('onboarding-accept').checked,
+                    terms_version:modal.dataset.termsVersion})
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.error || 'Không lưu được thiết lập');
+            state.setupRequired = false;
+            applyTheme(data.settings.theme, false, false);
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            setAppInert(false);
+            await Promise.allSettled([loadAppStatus(), loadExcelData()]);
+            document.querySelector('.nav-tab[data-tab="tab-upload"]').focus();
+        } catch (err) {onboardingError(err.message);}
+        finally {
+            inputs.forEach(input => input.disabled = false);
+            onboardingSaving = false;
+            updateOnboardingButton();
+        }
+    });
+    document.addEventListener('keydown', event => trapDialogTab(event, modal));
+    const termsModal = document.getElementById('terms-modal');
+    let termsFocus = null;
+    document.getElementById('btn-read-terms').addEventListener('click', () => {
+        termsFocus = document.activeElement;
+        termsModal.classList.remove('hidden');
+        termsModal.classList.add('flex');
+        setAppInert(true);
+        document.getElementById('btn-close-terms').focus();
+    });
+    function closeTerms() {
+        termsModal.classList.add('hidden');
+        termsModal.classList.remove('flex');
+        setAppInert(false);
+        if (termsFocus) termsFocus.focus();
+    }
+    document.getElementById('btn-close-terms').addEventListener('click', closeTerms);
+    document.addEventListener('keydown', event => {
+        trapDialogTab(event, termsModal);
+        if (event.key === 'Escape' && !termsModal.classList.contains('hidden')) closeTerms();
+    });
+}
+
+async function loadOnboarding() {
+    initOnboarding();
+    const modal = document.getElementById('onboarding-modal');
+    onboardingLoaded = false;
+    try {
+        const response = await fetch('/api/onboarding');
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error('Không tải được thiết lập. Vui lòng thử lại.');
+        state.setupRequired = data.required;
+        onboardingLoaded = true;
+        onboardingTheme = M3_THEMES.some(theme => theme.id === data.settings.theme) ? data.settings.theme : 'rose';
+        document.getElementById('onboarding-path').value = data.settings.excel_path || '';
+        document.querySelector(`input[name="onboarding-theme"][value="${onboardingTheme}"]`).checked = true;
+        applyTheme(onboardingTheme, false, false);
+        setSidebarCollapsed(data.settings.sidebar_collapsed === true);
+        document.getElementById('btn-onboarding-retry').classList.add('hidden');
+        onboardingError('');
+        if (state.setupRequired) {
+            document.getElementById('onboarding-accept').checked = false;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setAppInert(true);
+            document.getElementById('onboarding-path').focus();
+        }
+    } catch (err) {
+        state.setupRequired = true;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setAppInert(true);
+        onboardingError(err.message);
+        document.getElementById('btn-onboarding-retry').classList.remove('hidden');
+    }
+    updateOnboardingButton();
 }
