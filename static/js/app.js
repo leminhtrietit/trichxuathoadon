@@ -826,9 +826,6 @@ function initSettings() {
 // ==============================================================
 function initInitExcelModal() {
     const modal = document.getElementById('modal-init-excel');
-    const btnQuickInit = document.getElementById('btn-quick-init');
-    const btnSidebarInit = document.getElementById('btn-sidebar-init-excel');
-    const btnTabExcelInit = document.getElementById('btn-tab-excel-init');
     const btnSettingsInit = document.getElementById('btn-init-new-excel');
     const btnClose = document.getElementById('btn-close-init-modal');
     const btnCancel = document.getElementById('btn-cancel-init-modal');
@@ -854,9 +851,9 @@ function initInitExcelModal() {
         modal.classList.remove('flex');
     }
 
-    [btnQuickInit, btnSidebarInit, btnTabExcelInit, btnSettingsInit].forEach(btn => {
-        if (btn) btn.addEventListener('click', openInitModal);
-    });
+    if (btnSettingsInit) {
+        btnSettingsInit.addEventListener('click', openInitModal);
+    }
 
     [btnClose, btnCancel].forEach(btn => {
         if (btn) btn.addEventListener('click', closeInitModal);
@@ -938,10 +935,7 @@ function initInitExcelModal() {
 // Modal Xóa Toàn Bộ Dữ Liệu Excel có ràng buộc chuỗi nghiêm ngặt
 function initClearDataModal() {
     const modal = document.getElementById('modal-clear-data');
-    const btnQuickClear = document.getElementById('btn-quick-clear');
-    const btnSidebarClear = document.getElementById('btn-sidebar-clear-excel');
     const btnOpenFromSettings = document.getElementById('btn-open-clear-modal');
-    const btnOpenFromExcelTab = document.getElementById('btn-tab-excel-clear');
     const btnClose = document.getElementById('btn-close-clear-modal');
     const btnCancel = document.getElementById('btn-cancel-clear-modal');
     const inputConfirm = document.getElementById('input-confirm-clear');
@@ -985,9 +979,9 @@ function initClearDataModal() {
         if (inputConfirm) inputConfirm.value = '';
     }
 
-    [btnQuickClear, btnSidebarClear, btnOpenFromSettings, btnOpenFromExcelTab].forEach(btn => {
-        if (btn) btn.addEventListener('click', openClearModal);
-    });
+    if (btnOpenFromSettings) {
+        btnOpenFromSettings.addEventListener('click', openClearModal);
+    }
 
     [btnClose, btnCancel].forEach(btn => {
         if (btn) btn.addEventListener('click', closeClearModal);
@@ -1313,16 +1307,18 @@ function renderPivotTab() {
         totalThanhToan += (r.tong_tien || 0);
     });
 
-    // Cập nhật KPI cards
-    const kpiCount = document.getElementById('pivot-kpi-count');
-    const kpiChuaThue = document.getElementById('pivot-kpi-chua-thue');
-    const kpiThue = document.getElementById('pivot-kpi-thue');
-    const kpiTong = document.getElementById('pivot-kpi-tong');
+    // Cập nhật 4 thẻ KPI lớn hiển thị live theo dữ liệu sau bộ lọc
+    const statInvoices = document.getElementById('stat-total-invoices');
+    const statAmount = document.getElementById('stat-total-amount');
+    const statVat = document.getElementById('stat-total-vat');
+    const statSellers = document.getElementById('stat-total-sellers');
 
-    if (kpiCount) kpiCount.textContent = formatNumber(totalInvoices);
-    if (kpiChuaThue) kpiChuaThue.textContent = formatCurrency(totalChuaThue);
-    if (kpiThue) kpiThue.textContent = formatCurrency(totalThue);
-    if (kpiTong) kpiTong.textContent = formatCurrency(totalThanhToan);
+    const distinctSellers = new Set(filteredRows.map(r => r.nb_mst).filter(Boolean)).size;
+
+    if (statInvoices) statInvoices.textContent = formatNumber(totalInvoices);
+    if (statAmount) statAmount.textContent = formatCurrency(totalThanhToan);
+    if (statVat) statVat.textContent = formatCurrency(totalThue);
+    if (statSellers) statSellers.textContent = formatNumber(distinctSellers);
 
     // ==========================================
     // 1. RENDER BẢNG 1: PIVOT THEO NHÀ CUNG CẤP & THƯ MỤC
