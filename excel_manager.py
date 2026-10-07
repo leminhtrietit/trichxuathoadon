@@ -15,6 +15,7 @@ import os
 from copy import deepcopy
 from threading import RLock
 import openpyxl
+from invoice_tax import calculate_line_tax
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from datetime import datetime
@@ -1068,6 +1069,10 @@ def read_excel_invoice_details(filepath, stt=None):
                 key = '_'.join(str(value(name) or '').strip() for name in ('Ký hiệu HĐ', 'Số HĐ', 'MST Người bán'))
                 if key in by_key:
                     item = dict(zip(fields, (value(name) for name in names[7:18])))
+                    if item['tien_thue'] is None or item['tien_thue'] == '':
+                        item['tien_thue'] = calculate_line_tax(to_float(item['thanh_tien']), item['thue_suat'])
+                    if (item['tong_tien_dong'] is None or item['tong_tien_dong'] == '') and item['tien_thue'] is not None:
+                        item['tong_tien_dong'] = to_float(item['thanh_tien']) + to_float(item['tien_thue'])
                     by_key[key]['hang_hoa'].append(item)
         return {'success': True, 'invoices': invoices}
     except Exception as exc:

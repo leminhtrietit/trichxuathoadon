@@ -4,6 +4,7 @@ Ngày kiểm tra: 07/10/2026. Phạm vi: mã nguồn Flask, PyWebView, đọc/gh
 
 ## Những thay đổi đã hoàn thành
 
+- Bổ sung v2.0.5: sửa tiền thuế XML đã khai báo bị bỏ qua, trường mở rộng/thuế suất thập phân; bỏ gán cứng 8% và thuế dòng PDF 0. Thiếu dữ liệu được hiển thị chưa xác định. Popup bỏ khối metadata sản phẩm lặp lại; mở từng dòng vẫn chỉ đọc Excel. 23 test backend và 4 bộ UI nguồn đã đạt; cả 4 bộ UI cũng đạt trên `.exe` v2.0.5. PDF mới kiểm tra qua layout text giả lập. Giữ nguyên SHA-256 Excel khi mở xem; các số đã lưu không bị tự thay.
 - Bổ sung v2.0.4: logo app được nhúng trong màn hình chờ; thiết lập lần đầu chọn output/màu và chấp nhận điều khoản, không tạo workbook trước lựa chọn. Sidebar thu gọn giữ icon và ghi nhớ. Cấu hình thay nguyên tử; cơ chế ghi Excel vẫn chưa có khóa/thay nguyên tử (mục tồn đọng). 17 test backend và ba bộ UI trên dữ liệu tạm đã đạt; cả ba bộ UI cũng đạt trên `.exe` v2.0.4, gồm thiết lập/đồng ý, ghi nhớ sidebar, quét/lưu và xem không thay đổi Excel.
 - Bổ sung v2.0.3: thu gọn chọn màu/sidebar, thêm API chỉ đọc hóa đơn và sản phẩm đã lưu; không đọc sheet chi tiết trong khởi động mà chỉ khi người dùng mở xem. 12 test backend và hai bộ UI trên mã nguồn/bản `.exe` đều đạt; hash workbook giữ nguyên sau xem. Các bảng vẫn chưa phân trang.
 - Bổ sung v2.0.2: đã tái hiện và sửa lỗi `null.classList` sau quét do tham chiếu tới thanh tác vụ HTML cũ; sửa trường tổng thanh toán trong popup và đếm mặt hàng về 0 khi preview trống. Kiểm tra UI với API thật và dữ liệu tạm đã đạt cho quét/lưu/ghi đè/upload/thư mục trống.
@@ -27,7 +28,7 @@ Benchmark dùng workbook tổng hợp tự sinh, mỗi hóa đơn có 5 dòng h�
 | 1.000 / 5.000 | 2,716 giây | 0,722 giây | 0,055 giây |
 | 10.000 / 50.000 | 20,111 giây | 7,745 giây | 0,091 giây |
 
-Bản `.exe` cũ: 46.173.169 byte; bản v2.0.4: 27.204.728 byte, giảm khoảng 41%. Dung lượng này phụ thuộc môi trường đóng gói.
+Bản `.exe` cũ: 46.173.169 byte; bản v2.0.5: 27.207.843 byte, giảm khoảng 41%. Dung lượng này phụ thuộc môi trường đóng gói.
 
 Chạy lại benchmark từ thư mục dự án: `python benchmarks/benchmark_summary.py`. Kết quả lưu ở `build/benchmark-results.json`.
 
@@ -37,7 +38,6 @@ P1: nên sửa sớm vì liên quan tính đúng đắn/dữ liệu hoặc thao 
 
 | Ưu tiên | Vấn đề và bằng chứng | Hướng sửa |
 |---|---|---|
-| P1 | **Thuế dòng XML có thể sai.** `parser.py`, dòng lấy `vat_elem`, dùng `find('TThue') or find('VATAmount')`. Element chỉ chứa text được đánh giá là false, nên có thể bỏ qua giá trị thuế thật. Thử `<TThue>25</TThue>` cùng thành tiền 1.000, thuế suất 10% cho kết quả 100 thay vì 25. | Chọn element bằng kiểm tra `is not None`; rà soát mọi chuỗi `find(...) or ...`; bổ sung fixture cho thuế làm tròn và nhiều schema. |
 | P1 | **Nội dung hóa đơn có thể được thực thi như HTML.** `static/js/app.js`, `renderExcelTable` và các bảng/modal, chèn tên người bán/tên hàng/tên file trực tiếp vào `innerHTML`. Thử tên người bán chứa thẻ ảnh với `onerror` đã chạy được một cờ JavaScript vô hại trong trình duyệt kiểm thử. | Dùng `textContent` cho dữ liệu, hoặc escape đúng cho text và thuộc tính; kiểm tra cả toast và modal. |
 | P1 | **Ghi Excel chưa có khóa và thay file nguyên tử.** Các hàm lưu/khởi tạo/xóa gọi `wb.save(filepath)` trực tiếp; các yêu cầu Flask và nhiều phiên Desktop có thể cùng đọc rồi ghi một workbook. Phân tích mã cho thấy nguy cơ mất cập nhật hoặc file ghi dở khi bị ngắt; chưa tái hiện lỗi mất dữ liệu. | Khóa theo đường dẫn, có khóa giữa tiến trình; ghi file tạm cùng ổ rồi thay file nguyên tử; bổ sung bản sao phục hồi và thử lưu đồng thời. |
 | P1 | **ZIP không giới hạn kích thước giải nén.** `/api/upload` chỉ giới hạn tổng HTTP upload 200 MB nhưng đọc toàn bộ từng entry bằng `sub_file.read()`, không giới hạn tổng byte giải nén/số entry. Chưa thử ZIP gây cạn bộ nhớ. | Kiểm tra kích thước từng entry và tổng giải nén trước khi đọc; giới hạn số file và lượng byte đọc thực tế. |
@@ -47,7 +47,7 @@ P1: nên sửa sớm vì liên quan tính đúng đắn/dữ liệu hoặc thao 
 | P2 | **Quét PDF/XML dài không có tiến độ hoặc hủy.** `scan_folder_for_invoices` parse tuần tự và API đợi toàn bộ kết quả. | Chạy thành tác vụ có tiến độ/hủy, xử lý theo lô; đo trước khi chọn số worker để tránh tăng bộ nhớ quá nhiều. |
 | P2 | **Khóa chống trùng chưa gồm mẫu số như README mô tả.** Parser và Excel hiện dùng ký hiệu + số hóa đơn + MST. | Xác nhận quy tắc với dữ liệu thực; bổ sung mẫu số và cơ chế chuyển khóa tương thích workbook cũ. |
 
-Thứ tự đề xuất: sửa thuế XML và escape dữ liệu giao diện; bảo vệ ghi Excel; giới hạn ZIP; phân trang bảng và thêm tiến độ quét.
+Thứ tự đề xuất: escape các vùng dữ liệu giao diện còn lại; bảo vệ ghi Excel; giới hạn ZIP; phân trang bảng và thêm tiến độ quét.
 
 ## Xác minh và cách dùng bản mới
 
@@ -57,7 +57,7 @@ Thứ tự đề xuất: sửa thuế XML và escape dữ liệu giao diện; b�
 - PyWebView/WebView2 thật với cửa sổ kiểm thử ẩn và dữ liệu tạm: màn hình chờ chuyển được tới giao diện, dữ liệu tải xong và cửa sổ đóng được.
 - PyInstaller đóng gói v2.0.2 thành công `dist/v2.0.2/TrichXuatHoaDon.exe`. Đã chạy trực tiếp bản đóng gói với dữ liệu tạm: API báo v2.0.2, tài nguyên HTML/CSS/JS/font trả HTTP 200 và workbook nằm trong thư mục cô lập. Bản `.exe` đã chạy trực tiếp UI hồi quy quét/lưu/ghi đè/upload/xóa preview/thư mục trống và đạt. Chưa đo thời gian khởi động hoặc kiểm thử toàn bộ các thao tác khác/mọi mẫu hóa đơn.
 
-Mở **`dist/v2.0.4/TrichXuatHoaDon.exe`** để dùng bản mới. ZIP mới: `dist/TrichXuatHoaDon-v2.0.4-Windows.zip`. File `.exe` và ZIP v2.0.0 cũ ở thư mục gốc chưa được thay thế. Nếu workbook cũ không tự được chọn, chọn lại file đó trong Cài Đặt; không có bước chuyển dữ liệu tự động từ thư mục tạm của bản cũ.
+Mở **`dist/v2.0.5/TrichXuatHoaDon.exe`** để dùng bản mới. ZIP mới: `dist/TrichXuatHoaDon-v2.0.5-Windows.zip`. File `.exe` và ZIP v2.0.0 cũ ở thư mục gốc chưa được thay thế. Nếu workbook cũ không tự được chọn, chọn lại file đó trong Cài Đặt; không có bước chuyển dữ liệu tự động từ thư mục tạm của bản cũ.
 
 Màn hình chờ hiện từ lúc cửa sổ WebView được tạo. Bản `--onefile` vẫn cần giải nén trước thời điểm này; muốn có logo ngay trong giai đoạn giải nén cần bổ sung splash ở bootloader hoặc chuyển sang bản `onedir`.
 

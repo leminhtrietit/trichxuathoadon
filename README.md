@@ -24,11 +24,17 @@
 
 Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng hợp theo nhà cung cấp và kỳ kê khai thuế, cùng bộ lọc trên giao diện ứng dụng.
 
-## Thực trạng dự án — v2.0.4, cập nhật 07/10/2026
+## Thực trạng dự án — v2.0.5, cập nhật 07/10/2026
 
 **Quy tắc dành cho các agent:** đọc mục này và [AGENTS.md](AGENTS.md) trước khi làm việc. Sau mỗi đợt thay đổi đáng kể, cập nhật README ngay trong cùng đợt làm việc: phần đã hoàn thành, lỗi còn tồn đọng, kết quả kiểm thử và bản đóng gói. README là nơi tra cứu thực trạng hiện tại; báo cáo chi tiết không thay thế việc cập nhật README.
 
 ### Đã hoàn thành
+
+- **v2.0.5 thuế từng dòng:** XML ưu tiên `TThue`/`VATAmount`/`TaxAmount` khai báo, kể cả 0/số âm; bỏ lỗi truthiness của Element ở tiền thuế. Phân biệt trường tiền thuế mở rộng `TTin` với thuế suất. Nếu thiếu số tiền thuế, tính từ thành tiền và thuế suất số (gồm thập phân dấu chấm/phẩy), làm tròn 2 chữ số bằng Decimal; hỗ trợ các ký hiệu KCT/KKKNT. Không có đủ dữ liệu thì để trống và UI hiển thị “Chưa xác định”, không giả định thuế bằng 0.
+- **PDF văn bản:** bỏ gán cứng 8%/thuế từng dòng 0. Tính khi đọc được thuế suất cuối dòng; dùng thuế suất chung chỉ khi tổng tiền hàng và tổng thuế đối chiếu khớp; một mặt hàng khớp toàn bộ tiền hàng có thể nhận tiền thuế tổng đã khai báo. Không tự phân bổ tổng thuế cho nhiều dòng thiếu thuế suất. Các thử nghiệm PDF mới dùng văn bản layout giả lập, chưa xác nhận mọi mẫu PDF thực tế.
+- **Xem hóa đơn:** đã kiểm tra bấm trực tiếp vào từng dòng trong Danh sách để mở đúng hóa đơn, không cần nút riêng. Popup bỏ các khối “Thông tin sản phẩm 1, 2…” và Mã hàng/Tính chất/Tổng dòng phụ lặp lại dưới bảng; thông tin sản phẩm và tiền thuế vẫn nằm trong bảng.
+- **Excel cũ:** chỉ bù tiền thuế/tổng dòng bị bỏ trống trong kết quả xem khi đủ dữ liệu, không ghi workbook và không sửa các số đã lưu (kể cả 0). Nếu dữ liệu cũ đã ghi sai từ parser trước, hãy quét/tải lại hóa đơn gốc rồi tự chọn ghi đè để cập nhật; mở xem không tự sửa Excel.
+
 
 - **v2.0.4 màn hình chờ:** tên app → logo ứng dụng → phiên bản; phía dưới vẫn “powered by” kèm logo tác giả, không thêm card. Desktop nhúng cả hai logo để hiện trước khi Flask khởi động.
 - **Thiết lập lần đầu:** chọn file Excel kết quả (vị trí + tên `.xlsx`) và 1 trong 8 màu; màu được xem trước, chưa ghi cấu hình khi chưa chấp nhận. Bấm “Chấp nhận và bắt đầu” sau khi tích đồng ý điều khoản mới hoàn tất. API kiểm tra đồng ý rõ ràng, đúng phiên bản điều khoản, màu và đường dẫn đầy đủ. File mới được tạo tại vị trí chọn; file sổ hóa đơn đã có chỉ được đọc để kiểm tra, không xóa/khởi tạo lại. File hỏng hoặc workbook không có sheet hóa đơn bị từ chối. Không tự tạo workbook mặc định trước thiết lập lần đầu.
@@ -53,7 +59,7 @@ Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng 
 - Đóng gói Tailwind CSS và Font Awesome tại máy, không tải CDN cho giao diện; dùng font hệ thống.
 - Bản `.exe` lưu cấu hình và workbook mặc định vào `%LOCALAPPDATA%\MinhTrietEras\TrichXuatHoaDon\data`; đường dẫn Excel riêng vẫn do người dùng chọn. Chạy từ mã nguồn dùng thư mục `data` của dự án.
 - Chặn ghi đè workbook hiện có nhưng không đọc được; thông báo lỗi đọc Excel trên giao diện. Quét thư mục chỉ đánh dấu đã lưu khi lưu thành công.
-- Loại thư viện tùy chọn không dùng khỏi bản đóng gói; bản mới nằm ở **`dist/v2.0.4/TrichXuatHoaDon.exe`**. ZIP mới: `dist/TrichXuatHoaDon-v2.0.4-Windows.zip`. Các file `.exe`/ZIP v2.0.0, v2.0.1, v2.0.2 và v2.0.3 vẫn là bản cũ; mở đúng bản v2.0.4 để dùng bản sửa lỗi; chưa có bước chuyển dữ liệu tự động từ bản cũ.
+- Loại thư viện tùy chọn không dùng khỏi bản đóng gói; bản mới nằm ở **`dist/v2.0.5/TrichXuatHoaDon.exe`**. ZIP mới: `dist/TrichXuatHoaDon-v2.0.5-Windows.zip`. Các file `.exe`/ZIP v2.0.0 đến v2.0.4 vẫn là bản cũ; mở đúng bản v2.0.5 để dùng bản sửa lỗi; chưa có bước chuyển dữ liệu tự động từ bản cũ.
 
 ### Hiệu năng đã đo
 
@@ -64,7 +70,7 @@ Workbook tự sinh, mỗi hóa đơn có 5 dòng hàng hóa; mỗi cấu hình �
 | 1.000 / 5.000 | 2,716 giây | 0,722 giây | 0,055 giây |
 | 10.000 / 50.000 | 20,111 giây | 7,745 giây | 0,091 giây |
 
-Bản `.exe` cũ khoảng **46,2 MB**, bản v2.0.4 khoảng **27,2 MB**. Chạy lại số đo bằng `python benchmarks/benchmark_summary.py`; kết quả xuất vào `build/benchmark-results.json`. Script cố định mốc trước tối ưu ở commit `5c90279`, giữ nguyên mốc so sánh sau khi commit các thay đổi mới.
+Bản `.exe` cũ khoảng **46,2 MB**, bản v2.0.5 khoảng **27,2 MB**. Chạy lại số đo bằng `python benchmarks/benchmark_summary.py`; kết quả xuất vào `build/benchmark-results.json`. Script cố định mốc trước tối ưu ở commit `5c90279`, giữ nguyên mốc so sánh sau khi commit các thay đổi mới.
 
 ### Lỗi và giới hạn chưa sửa
 
@@ -72,7 +78,6 @@ P1 là các mục nên sửa sớm. P2 là các cải tiến tiếp theo. Danh s
 
 | Ưu tiên | Vấn đề còn tồn đọng | Bằng chứng / bước tiếp theo |
 |---|---|---|
-| P1 | Parser XML có thể bỏ qua thuế dòng đã khai báo. | `find('TThue') or find('VATAmount')` dùng truthiness của Element; thử thuế 25 cho ra 100. Chuyển sang kiểm tra `is not None`, thêm fixture. |
 | P1 | Dữ liệu hóa đơn được chèn trực tiếp vào `innerHTML`. | Đã tái hiện thực thi cờ JavaScript vô hại qua tên người bán. Escape dữ liệu hoặc dùng `textContent` ở bảng, modal, toast. |
 | P1 | Ghi Excel chưa có khóa giữa các tiến trình và chưa thay file nguyên tử. | Nguy cơ mất cập nhật khi nhiều phiên lưu đồng thời hoặc file ghi dở khi bị ngắt; chưa tái hiện mất dữ liệu. Thêm khóa theo đường dẫn và ghi qua file tạm. |
 | P1 | ZIP chưa giới hạn tổng byte giải nén và số entry. | Giới hạn HTTP upload 200 MB không giới hạn dung lượng sau giải nén. Kiểm tra kích thước và giới hạn byte đọc thực tế. |
@@ -82,9 +87,14 @@ P1 là các mục nên sửa sớm. P2 là các cải tiến tiếp theo. Danh s
 | P2 | Quét XML/PDF dài chưa có tiến độ hoặc hủy. | Parse tuần tự trong một yêu cầu. Chuyển thành tác vụ theo lô, có tiến độ/hủy. |
 | P2 | Khóa chống trùng chưa gồm mẫu số. | Hiện dùng ký hiệu + số hóa đơn + MST. Xác nhận quy tắc và chuyển khóa tương thích workbook cũ. |
 
-Ưu tiên tiếp theo: sửa thuế XML và escape giao diện, bảo vệ ghi Excel, giới hạn ZIP, rồi phân trang bảng và tiến độ quét. Xem bằng chứng chi tiết trong [PERFORMANCE_AUDIT.md](PERFORMANCE_AUDIT.md).
+Parser XML vẫn có vài nhánh `find(...) or ...` ngoài tiền thuế, bộ test hiện phát cảnh báo Deprecation; các nhánh đó chưa được chuẩn hóa trong v2.0.5.
+
+Ưu tiên tiếp theo: escape các vùng giao diện còn lại, bảo vệ ghi Excel, giới hạn ZIP, rồi phân trang bảng và tiến độ quét. Xem bằng chứng chi tiết trong [PERFORMANCE_AUDIT.md](PERFORMANCE_AUDIT.md).
 
 ### Phạm vi đã kiểm thử và tình trạng bản đóng gói
+
+- v2.0.5: 6 test thuế mới đạt, gồm các alias tiền thuế khai báo, 0/âm, trường mở rộng, 8%/10%/1,5%/KCT/KKKNT/thiếu dữ liệu, làm tròn và đọc Excel chỉ bù ô trống. PDF thử với layout text giả lập: thuế suất dòng, thuế suất chung đối chiếu khớp, một dòng với tổng thuế và nhiều dòng thiếu dữ liệu. Bộ UI `tests/line_tax_ui.cjs` dùng upload/lưu API thật trên workbook tạm, bấm cả 4 dòng hóa đơn để kiểm tra thuế khai báo/tính được/chưa xác định, không có khối sản phẩm phụ. Cả 4 bộ UI trên mã nguồn đã đạt; SHA-256 workbook giữ nguyên khi chỉ xem.
+
 
 - v2.0.4: 5 test backend mới kiểm tra đồng ý/phiên bản điều khoản/màu/đường dẫn, ghi nhớ, nhận cấu hình cũ không đổi workbook, từ chối file hỏng và không đánh dấu hoàn tất khi ghi cấu hình thất bại. UI `tests/onboarding_ui.cjs` trên dữ liệu tạm đạt: lần đầu chưa tạo Excel, màu preview chưa lưu, hủy chọn file, đường dẫn lỗi, đồng ý rồi lưu đúng nơi chọn, mở lại không hỏi, thu gọn/mở rộng/điều hướng sidebar và xem lại điều khoản. Ba bộ UI quét/xem/thiết lập đều đạt trên mã nguồn. Ảnh minh họa: [thiết lập lần đầu](docs/first-run-preview.png) và [màn hình chờ](docs/startup-preview.png).
 
@@ -92,17 +102,18 @@ P1 là các mục nên sửa sớm. P2 là các cải tiến tiếp theo. Danh s
 - v2.0.3: kiểm tra UI `tests/invoice_view_ui.cjs` trên Edge headless đạt: tên/thứ tự sidebar, bấm dòng và mở bằng bàn phím, dữ liệu bên bán/mua/sản phẩm/tổng tiền, sản phẩm đã lưu sau tải lại trang, bỏ đúng 2 cột, chọn màu gọn tại 1320×860 và 1024×680. Hash SHA-256 workbook trước/sau xem giống nhau và không phát sinh yêu cầu ghi/xóa/khởi tạo Excel. Ba test backend mới kiểm tra chỉ đọc, tách sản phẩm đúng MST khi cùng số HĐ/ký hiệu, header đảo thứ tự, workbook thiếu/hỏng không bị tạo/ghi lại.
 
 
-- **17/17 test đạt:** `python -m unittest test_startup_performance tests.test_invoice_details tests.test_onboarding -v`. Các test dùng thư mục tạm, kiểm tra cache, đọc đồng thời, sửa file bên ngoài, save/clear, chống trùng/replace, bảo toàn file hỏng, workbook thiếu dimension metadata, API và tài nguyên màn hình chờ.
+- **23/23 test đạt:** `python -m unittest test_startup_performance tests.test_invoice_details tests.test_onboarding tests.test_line_tax -v`. Các test dùng thư mục tạm, kiểm tra cache, đọc đồng thời, sửa file bên ngoài, save/clear, chống trùng/replace, bảo toàn file hỏng, workbook thiếu dimension metadata, API và tài nguyên màn hình chờ.
 - Kiểm tra UI bổ sung `tests/scan_ui_regression.cjs` trên Edge headless đạt: quét mới, tổng tiền đúng, lưu, quét trùng/ghi đè, upload, xóa preview, thư mục trống; không có lỗi JavaScript. Máy chủ fixture `tests/ui_fixture_server.py` cô lập toàn bộ file/cấu hình trong thư mục tạm; script UI xác minh workbook nằm trong fixture trước khi thao tác.
 - Kiểm tra cú pháp Python/JavaScript và `git diff --check` đạt.
 - Edge headless đã mở giao diện với tài nguyên bên ngoài bị chặn, chuyển tab, đổi theme và xác nhận lớp chờ biến mất; không có lỗi JavaScript. Ảnh màn hình chờ được lưu tại [docs/startup-preview.png](docs/startup-preview.png); ảnh kiểm tra bổ sung ở `build/screens/`.
-- Bản điều chỉnh màn hình chờ đã được xem ở 1320×860 và 1024×680; nội dung hiển thị đúng tên app, logo ứng dụng, v2.0.4, “powered by” kèm logo tác giả. Logo không có nền/card/viền bao quanh. Phiên bản của màn hình chờ lấy từ `config.APP_VERSION` ở cả Desktop và Web.
+- Bản điều chỉnh màn hình chờ đã được xem ở 1320×860 và 1024×680; nội dung hiển thị đúng tên app, logo ứng dụng, v2.0.5, “powered by” kèm logo tác giả. Logo không có nền/card/viền bao quanh. Phiên bản của màn hình chờ lấy từ `config.APP_VERSION` ở cả Desktop và Web.
 - Logo mới đã được xác minh alpha trong suốt và đủ 7 kích thước ICO. Kiểm tra cửa sổ WebView2 ẩn đã nạp icon mới thực tế ở 32×32 px; icon `.exe` dùng cùng tài nguyên. Đã kiểm tra tài nguyên PE của `.exe` có đủ 7 kích thước; bản đóng gói mới đã phục vụ đúng PNG/ICO qua HTTP trong smoke test.
 - PyWebView/WebView2 thật với cửa sổ ẩn và dữ liệu tạm đã chuyển từ màn hình chờ vào giao diện rồi đóng thành công.
 - PyInstaller đã đóng gói **v2.0.2** thành công. Đã chạy trực tiếp file `.exe` với thư mục dữ liệu tạm: API báo đúng phiên bản, tài nguyên giao diện trả HTTP 200, đường dẫn Excel nằm trong thư mục cô lập. Bản xuất lại cũng đã xác nhận HTML màn hình chờ có “powered by”, không còn card/thanh chờ. Bản `.exe` v2.0.2 cũng đã chạy trực tiếp bộ UI hồi quy quét/lưu/ghi đè/upload/xóa preview/thư mục trống và đạt. Đây là kiểm tra khởi động/backend/tài nguyên và các luồng UI nêu trên; chưa kiểm thử toàn bộ thao tác giao diện hoặc mọi mẫu PDF/XML trên bản đóng gói, chưa đo thời gian khởi động toàn app.
 - PyInstaller v2.0.3 đã đóng gói thành công, `.exe` 27.195.682 byte. Đã chạy trực tiếp bản mới với `%LOCALAPPDATA%` tạm, xác minh phiên bản/tài nguyên giao diện/cấu hình cô lập, rồi chạy cả `scan_ui_regression.cjs` và `invoice_view_ui.cjs` trên backend của `.exe`: tất cả đạt; SHA-256 workbook giữ nguyên khi xem hóa đơn. Chưa kiểm thử mọi mẫu PDF/XML hoặc toàn bộ thao tác ứng dụng.
 - PyInstaller v2.0.4 đã đóng gói thành công, `.exe` 27.204.728 byte. Đã chạy trực tiếp bản cuối với `%LOCALAPPDATA%` tạm: API đúng phiên bản, tài nguyên đầy đủ, cả ba bộ UI thiết lập/quét/xem đều đạt; có kiểm tra focus sau chấp nhận và vòng Tab trong popup. Bản đóng gói xác nhận lần đầu chưa tự tạo Excel, cấu hình và chấp nhận được nhớ, sidebar dùng được sau mở lại; workbook giữ nguyên SHA-256 khi chỉ xem. Chưa kiểm thử mọi mẫu hóa đơn, mọi thao tác hoặc đo thời gian khởi động toàn app.
-- Bản bàn giao gồm `dist/v2.0.4/TrichXuatHoaDon.exe` và `dist/TrichXuatHoaDon-v2.0.4-Windows.zip`, kèm ghi chú [RELEASE_NOTES_v2.0.4.md](RELEASE_NOTES_v2.0.4.md). Nhánh bàn giao mã nguồn: `main` tại `origin` (`leminhtrietit/trichxuathoadon`). Chưa xuất bản GitHub Release v2.0.4; binary/ZIP không đưa vào Git.
+- PyInstaller v2.0.5 đã đóng gói thành công, `.exe` 27.207.843 byte. Đã chạy trực tiếp bản cuối với dữ liệu tạm: phiên bản và tài nguyên đúng, cả 4 bộ UI thiết lập/quét/xem/thuế đều đạt. Bấm cả 4 dòng mở đúng hóa đơn; thuế khai báo 25 được giữ, thuế suất 1,5% cho 15 trên tiền hàng 1.000, thiếu dữ liệu hiển thị chưa xác định. Không có các khối “Thông tin sản phẩm”/“Tính chất” phụ; workbook giữ nguyên SHA-256 sau xem. Chưa kiểm thử các mẫu PDF thực tế bổ sung hoặc mọi thao tác của app.
+- Bản bàn giao gồm `dist/v2.0.5/TrichXuatHoaDon.exe` và `dist/TrichXuatHoaDon-v2.0.5-Windows.zip`, kèm ghi chú [RELEASE_NOTES_v2.0.5.md](RELEASE_NOTES_v2.0.5.md). Nhánh bàn giao mã nguồn: `main` tại `origin` (`leminhtrietit/trichxuathoadon`). Chưa xuất bản GitHub Release v2.0.5; binary/ZIP không đưa vào Git.
 - Màn hình chờ xuất hiện khi cửa sổ WebView được tạo. Bản `--onefile` vẫn giải nén trước thời điểm đó; chưa có splash ở bootloader.
 
 ---
@@ -179,12 +190,12 @@ Sau khi thay đổi các class giao diện, biên dịch lại CSS trước khi 
 
 ```powershell
 npx --yes tailwindcss@3.4.17 -c tailwind.config.cjs -i static/css/tailwind.input.css -o static/css/tailwind.css --minify
-python -m unittest test_startup_performance tests.test_invoice_details tests.test_onboarding -v
+python -m unittest test_startup_performance tests.test_invoice_details tests.test_onboarding tests.test_line_tax -v
 ```
 
-Kiểm tra UI cần Node.js tìm được package `playwright` và Microsoft Edge. Chạy `python tests/ui_fixture_server.py` ở terminal thứ nhất, rồi lần lượt `node tests/onboarding_ui.cjs`, `node tests/scan_ui_regression.cjs` và `node tests/invoice_view_ui.cjs` ở terminal thứ hai. Trong Codex có thể dùng package Playwright của runtime bundled qua `NODE_PATH`; không chạy kiểm tra này trên máy chủ ứng dụng chứa dữ liệu thật.
+Kiểm tra UI cần Node.js tìm được package `playwright` và Microsoft Edge. Chạy `python tests/ui_fixture_server.py` ở terminal thứ nhất, rồi lần lượt `node tests/onboarding_ui.cjs`, `node tests/scan_ui_regression.cjs`, `node tests/invoice_view_ui.cjs` và `node tests/line_tax_ui.cjs` ở terminal thứ hai. Trong Codex có thể dùng package Playwright của runtime bundled qua `NODE_PATH`; không chạy kiểm tra này trên máy chủ ứng dụng chứa dữ liệu thật. Mỗi đợt chạy cả bộ cần khởi động một máy chủ fixture mới vì các kiểm tra có tạo dữ liệu tạm.
 
-Chạy `build_exe.bat` để tạo `dist\v2.0.4\TrichXuatHoaDon.exe`. Node.js chỉ cần khi biên dịch CSS hoặc chạy kiểm tra UI; người sử dụng `.exe` không cần Node.js hoặc Python. Các kiểm tra mới dùng thư mục tạm để không thay đổi dữ liệu và cấu hình thật.
+Chạy `build_exe.bat` để tạo `dist\v2.0.5\TrichXuatHoaDon.exe`. Node.js chỉ cần khi biên dịch CSS hoặc chạy kiểm tra UI; người sử dụng `.exe` không cần Node.js hoặc Python. Các kiểm tra mới dùng thư mục tạm để không thay đổi dữ liệu và cấu hình thật.
 
 ```
 trichxuathoadon/

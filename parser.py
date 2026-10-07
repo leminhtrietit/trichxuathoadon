@@ -18,6 +18,7 @@ import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime
 import pypdf
+from invoice_tax import calculate_line_tax, normalize_tax_label
 
 def strip_namespace(tag):
     """Bỏ namespace trong tag XML, ví dụ {http://...}HDon -> HDon"""
@@ -187,26 +188,23 @@ def parse_xml_invoice(xml_source, filename=''):
         thanh_tien = safe_float(safe_text(item_elem, 'ThTien') or safe_text(item_elem, 'Amount') or safe_text(item_elem, 'Total'))
         thue_suat = safe_text(item_elem, 'TSuat') or safe_text(item_elem, 'TaxRate') or safe_text(item_elem, 'VATRate') or ''
 
-        tien_thue_dong = 0.0
-        found_tax = False
-        for ttin in item_elem.findall('.//TTin'):
-            ttruong = safe_text(ttin, 'TTruong').lower()
-            if 'thuế' in ttruong or 'thue' in ttruong:
-                tien_thue_dong = safe_float(safe_text(ttin, 'DLieu'))
-                found_tax = True
-                break
-
-        if not found_tax:
-            vat_elem = item_elem.find('TThue') or item_elem.find('VATAmount')
-            if vat_elem is not None and vat_elem.text:
-                tien_thue_dong = safe_float(vat_elem.text)
-                found_tax = True
-
-        if not found_tax and thue_suat and thanh_tien > 0:
-            rate_match = re.search(r'(\d+)', thue_suat)
-            if rate_match:
-                rate = float(rate_match.group(1))
-                tien_thue_dong = round(thanh_tien * (rate / 100.0), 2)
+        # Ưu tiên số tiền thuế khai báo, kể cả 0 hoặc số âm; không dùng truthiness của Element.
+        tien_thue_dong = None
+        for tag in ('TThue', 'VATAmount', 'TaxAmount'):
+            text = safe_text(item_elem, tag)
+            if text:
+                tien_thue_dong = safe_float(text, default=None)
+                if tien_thue_dong is not None:
+                    break
+        if tien_thue_dong is None:
+            for ttin in item_elem.findall('.//TTin'):
+                label = normalize_tax_label(safe_text(ttin, 'TTruong'))
+                if label in ('tthue', 'tienthue', 'tienthuegtgt', 'vatamount', 'taxamount'):
+                    tien_thue_dong = safe_float(safe_text(ttin, 'DLieu'), default=None)
+                    if tien_thue_dong is not None:
+                        break
+        if tien_thue_dong is None:
+            tien_thue_dong = calculate_line_tax(thanh_tien, thue_suat)
 
         items.append({
             'stt': stt,
@@ -219,7 +217,7 @@ def parse_xml_invoice(xml_source, filename=''):
             'thanh_tien': thanh_tien,
             'thue_suat': thue_suat,
             'tien_thue': tien_thue_dong,
-            'tong_tien_dong': thanh_tien + tien_thue_dong
+            'tong_tien_dong': thanh_tien + tien_thue_dong if tien_thue_dong is not None else None
         })
 
     ttoan = ndhdon.find('TToan') or ndhdon.find('.//Payment')
@@ -239,7 +237,7 @@ def parse_xml_invoice(xml_source, filename=''):
 
     if tong_tien_thanh_toan == 0 and items:
         tong_tien_chua_thue = sum(it['thanh_tien'] for it in items)
-        tong_tien_thue = sum(it['tien_thue'] for it in items)
+        tong_tien_thue = sum(it['tien_thue'] or 0 for it in items)
         tong_tien_thanh_toan = tong_tien_chua_thue + tong_tien_thue
 
     ngay_ky = ''
@@ -579,6 +577,10 @@ def parse_pdf_invoice(pdf_source, filename=''):
         if tong_tien_thanh_toan == 0 and tong_tien_chua_thue > 0:
             tong_tien_thanh_toan = tong_tien_chua_thue + tong_tien_thue
 
+        rates = re.findall(r'(?:Thuế\s*suất(?:\s*(?:GTGT|VAT))?|VAT\s*rate|Tax\s*rate)\s*:?\s*(\d+(?:[.,]\d+)?)\s*%', full_text_repaired, re.IGNORECASE)
+        unique_rates = set(rate.replace(',', '.') for rate in rates)
+        header_rate = next(iter(unique_rates)) + '%' if len(unique_rates) == 1 else ''
+
         # 9. Bóc tách mặt hàng (Line items)
         items = []
         seen_items = set()
@@ -595,6 +597,10 @@ def parse_pdf_invoice(pdf_source, filename=''):
                     continue
                 seen_items.add(item_key)
 
+                line_rate_match = re.search(r'(\d+(?:[.,]\d+)?)\s*%\s*$', rest)
+                line_rate = line_rate_match.group(1) + '%' if line_rate_match else ''
+                if line_rate_match:
+                    rest = rest[:line_rate_match.start()].rstrip()
                 nums = re.findall(r'([0-9]{1,3}(?:\.[0-9]{3})+(?:,[0-9]+)?|\d+)', rest)
                 m_dvt = re.match(r'^([A-Za-zÀ-ỹ]+)\s+', rest)
                 dvt = m_dvt.group(1) if m_dvt else ''
@@ -622,6 +628,7 @@ def parse_pdf_invoice(pdf_source, filename=''):
                         don_gia = valid_floats[0]
                         thanh_tien = valid_floats[0]
 
+                line_tax = calculate_line_tax(thanh_tien, line_rate)
                 items.append({
                     'stt': str(stt),
                     'tinh_chat': '1',
@@ -631,10 +638,21 @@ def parse_pdf_invoice(pdf_source, filename=''):
                     'so_luong': so_luong,
                     'don_gia': don_gia,
                     'thanh_tien': thanh_tien,
-                    'thue_suat': '8%' if tong_tien_thue > 0 else '',
-                    'tien_thue': 0.0,
-                    'tong_tien_dong': thanh_tien
+                    'thue_suat': line_rate,
+                    'tien_thue': line_tax,
+                    'tong_tien_dong': thanh_tien + line_tax if line_tax is not None else None
                 })
+
+        # Chỉ dùng thuế suất chung khi tiền hàng và tổng thuế đối chiếu khớp.
+        if items and header_rate and m_thue is not None:
+            taxes = [calculate_line_tax(item['thanh_tien'], item['thue_suat'] or header_rate) for item in items]
+            if all(tax is not None for tax in taxes) and abs(sum(taxes) - tong_tien_thue) < 0.011 and abs(sum(item['thanh_tien'] for item in items) - tong_tien_chua_thue) < 0.011:
+                for item, tax in zip(items, taxes):
+                    if item['tien_thue'] is None:
+                        item.update(thue_suat=header_rate, tien_thue=tax, tong_tien_dong=item['thanh_tien'] + tax)
+        # Một dòng khớp toàn bộ tiền hàng thì tiền thuế tổng chính là thuế dòng đó.
+        if len(items) == 1 and items[0]['tien_thue'] is None and m_thue is not None and abs(items[0]['thanh_tien'] - tong_tien_chua_thue) < 0.011:
+            items[0].update(tien_thue=tong_tien_thue, tong_tien_dong=items[0]['thanh_tien'] + tong_tien_thue)
 
         if not items and tong_tien_thanh_toan > 0:
             # Fallback 1 dòng tổng quát nếu không tách được chi tiết
@@ -647,8 +665,8 @@ def parse_pdf_invoice(pdf_source, filename=''):
                 'so_luong': 1.0,
                 'don_gia': tong_tien_chua_thue or tong_tien_thanh_toan,
                 'thanh_tien': tong_tien_chua_thue or tong_tien_thanh_toan,
-                'thue_suat': '8%' if tong_tien_thue > 0 else '',
-                'tien_thue': tong_tien_thue,
+                'thue_suat': '',
+                'tien_thue': tong_tien_thue if m_thue is not None else None,
                 'tong_tien_dong': tong_tien_thanh_toan
             })
 

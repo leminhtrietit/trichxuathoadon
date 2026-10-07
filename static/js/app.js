@@ -51,6 +51,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+function formatLineMoney(amount) {
+    return amount === null || amount === undefined || amount === '' ? 'Chưa xác định' : formatCurrency(amount);
+}
+
 // Format tiền tệ VND
 const numberFormatter = new Intl.NumberFormat('vi-VN');
 function formatCurrency(amount) {
@@ -1168,8 +1172,8 @@ function renderItemsTable() {
                 <td class="px-4 py-3 text-right font-mono text-slate-600">${formatCurrency(it.don_gia)}</td>
                 <td class="px-4 py-3 text-right font-mono text-slate-900 font-semibold">${formatCurrency(it.thanh_tien)}</td>
                 <td class="px-4 py-3 text-center font-mono font-bold text-pink-600">${escapeHtml(it.thue_suat || '---')}</td>
-                <td class="px-4 py-3 text-right font-mono text-fuchsia-600">${formatCurrency(it.tien_thue)}</td>
-                <td class="px-5 py-3 text-right font-mono font-extrabold text-rose-600">${formatCurrency(it.tong_tien_dong)}</td>
+                <td class="px-4 py-3 text-right font-mono text-fuchsia-600">${formatLineMoney(it.tien_thue)}</td>
+                <td class="px-5 py-3 text-right font-mono font-extrabold text-rose-600">${formatLineMoney(it.tong_tien_dong)}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -2024,7 +2028,6 @@ function renderInvoiceExtraInfo(inv) {
         phien_ban: 'Phiên bản hóa đơn', ty_gia: 'Tỷ giá', mst_tcgp: 'MST tổ chức giải pháp', nguoi_ky: 'Người ký',
         email: 'Email', sdt: 'Điện thoại', stk: 'Số tài khoản', ngan_hang: 'Ngân hàng',
         ma_cua_hang: 'Mã cửa hàng', ten_cua_hang: 'Tên cửa hàng', ho_ten_nguoi_mua: 'Họ tên người mua',
-        ma_hang: 'Mã hàng', tinh_chat: 'Tính chất', tong_tien_dong: 'Tổng dòng',
         thue_suat: 'Thuế suất', thanh_tien: 'Tiền chưa thuế', tien_thue: 'Tiền thuế'
     };
     function section(title, values, keys = Object.keys(values || {})) {
@@ -2056,7 +2059,6 @@ function renderInvoiceExtraInfo(inv) {
     section('Liên hệ bên bán', inv.nguoi_ban, ['email', 'stk', 'ngan_hang', 'ma_cua_hang', 'ten_cua_hang']);
     section('Liên hệ bên mua', inv.nguoi_mua, ['sdt', 'email', 'stk', 'ngan_hang', 'ho_ten_nguoi_mua']);
     (inv.thanh_toan.chi_tiet_thue || []).forEach((tax, index) => section(`Thuế suất ${index + 1}`, tax));
-    (inv.hang_hoa || []).forEach((item, index) => section(`Thông tin sản phẩm ${index + 1}`, item, ['ma_hang', 'tinh_chat', 'tong_tien_dong']));
     if (inv.source === 'excel') {
         const note = document.createElement('p');
         note.className = 'text-slate-400';
@@ -2103,7 +2105,7 @@ function showInvoiceModal(inv) {
             <td class="border border-pink-200 px-3 py-2 text-right font-mono">${formatCurrency(it.don_gia)}</td>
             <td class="border border-pink-200 px-3 py-2 text-right font-mono font-semibold">${formatCurrency(it.thanh_tien)}</td>
             <td class="border border-pink-200 px-2 py-2 text-center font-mono font-bold text-pink-600">${escapeHtml(it.thue_suat || '')}</td>
-            <td class="border border-pink-200 px-3 py-2 text-right font-mono text-fuchsia-600">${formatCurrency(it.tien_thue)}</td>
+            <td class="border border-pink-200 px-3 py-2 text-right font-mono text-fuchsia-600">${formatLineMoney(it.tien_thue)}</td>
         `;
         itemsBody.appendChild(tr);
     });
