@@ -46,7 +46,14 @@ from excel_manager import (
     clear_excel_data
 )
 
-app = Flask(__name__)
+if getattr(sys, 'frozen', False):
+    base_dir = sys._MEIPASS
+    app = Flask(__name__,
+                template_folder=os.path.join(base_dir, 'templates'),
+                static_folder=os.path.join(base_dir, 'static'))
+else:
+    app = Flask(__name__)
+
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB cho phép upload nhiều file
 
 current_excel_path = config.DEFAULT_EXCEL_PATH
