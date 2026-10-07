@@ -642,7 +642,7 @@ function openExtractionResultModal(data) {
             validInvoices.forEach((inv, idx) => {
                 const tt = inv.thong_tin_chung || {};
                 const nb = inv.nguoi_ban || {};
-                const toan = inv.tong_tien || {};
+                const toan = inv.thanh_toan || {};
 
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-pink-50/50 transition-colors';
@@ -1016,25 +1016,20 @@ function updateBadges() {
     const previewCount = state.parsedInvoices.length;
     const badgeUpload = document.getElementById('badge-upload-count');
     const badgeItems = document.getElementById('badge-items-count');
-    const actionsBar = document.getElementById('upload-actions');
-    const saveCount = document.getElementById('save-count-badge');
     const previewContainer = document.getElementById('preview-container');
+    const totalItems = state.parsedInvoices.reduce((sum, inv) => sum + (inv.hang_hoa ? inv.hang_hoa.length : 0), 0);
+    document.getElementById('items-table-count').textContent = `${totalItems} mặt hàng`;
 
     if (previewCount > 0) {
         badgeUpload.textContent = previewCount;
         badgeUpload.classList.remove('hidden');
-        actionsBar.classList.remove('hidden');
         previewContainer.classList.remove('hidden');
-        saveCount.textContent = previewCount;
 
-        const totalItems = state.parsedInvoices.reduce((sum, inv) => sum + (inv.hang_hoa ? inv.hang_hoa.length : 0), 0);
         badgeItems.textContent = totalItems;
         badgeItems.classList.remove('hidden');
-        document.getElementById('items-table-count').textContent = `${totalItems} mặt hàng`;
     } else {
         badgeUpload.classList.add('hidden');
         badgeItems.classList.add('hidden');
-        actionsBar.classList.add('hidden');
         previewContainer.classList.add('hidden');
     }
 }

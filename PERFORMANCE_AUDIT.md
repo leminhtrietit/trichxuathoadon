@@ -4,6 +4,8 @@ Ngày kiểm tra: 07/10/2026. Phạm vi: mã nguồn Flask, PyWebView, đọc/gh
 
 ## Những thay đổi đã hoàn thành
 
+- Bổ sung v2.0.2: đã tái hiện và sửa lỗi `null.classList` sau quét do tham chiếu tới thanh tác vụ HTML cũ; sửa trường tổng thanh toán trong popup và đếm mặt hàng về 0 khi preview trống. Kiểm tra UI với API thật và dữ liệu tạm đã đạt cho quét/lưu/ghi đè/upload/thư mục trống.
+
 - Màn hình chờ tối giản theo yêu cầu mới: tên app lớn phía trên, phiên bản bên dưới, dòng “powered by” kèm logo ở phía dưới. Không có card, thanh chuyển động hoặc nội dung phụ; giữ nền xanh tím nhẹ. Màn hình Desktop tự chứa ảnh/CSS, hiển thị trước khi import Flask/parser/openpyxl; chuyển sang giao diện khi máy chủ sẵn sàng. Giao diện web giữ màn hình chờ đến khi các yêu cầu dữ liệu ban đầu kết thúc, có cơ chế bỏ lớp chờ sau 15 giây nếu yêu cầu bị treo. Không thêm thời gian chờ cố định.
 - Dùng cổng do hệ điều hành cấp và bind ngay; bỏ dò cổng và vòng lặp đọc `/api/status` để chờ máy chủ.
 - Bỏ việc mở workbook có sẵn ngay khi import app. Đọc tổng hợp bằng chế độ streaming, chỉ duyệt sheet tổng hợp; cache kết quả theo đường dẫn, kích thước và thời điểm thay đổi file. Cache có khóa cho các lượt đọc đồng thời, tự làm mới khi Excel được lưu hoặc sửa bên ngoài, và trả bản sao để tránh bên gọi sửa kết quả lưu trong cache.
@@ -23,7 +25,7 @@ Benchmark dùng workbook tổng hợp tự sinh, mỗi hóa đơn có 5 dòng h�
 | 1.000 / 5.000 | 2,716 giây | 0,722 giây | 0,055 giây |
 | 10.000 / 50.000 | 20,111 giây | 7,745 giây | 0,091 giây |
 
-Bản `.exe` cũ: 46.173.169 byte; bản v2.0.1 có logo mới: 27.193.463 byte, giảm khoảng 41%. Dung lượng này phụ thuộc môi trường đóng gói.
+Bản `.exe` cũ: 46.173.169 byte; bản v2.0.2: 27.193.680 byte, giảm khoảng 41%. Dung lượng này phụ thuộc môi trường đóng gói.
 
 Chạy lại benchmark từ thư mục dự án: `python benchmarks/benchmark_summary.py`. Kết quả lưu ở `build/benchmark-results.json`.
 
@@ -51,9 +53,9 @@ Thứ tự đề xuất: sửa thuế XML và escape dữ liệu giao diện; b�
 - Kiểm tra cú pháp Python, JavaScript và `git diff --check` đạt.
 - Edge headless: chặn tài nguyên bên ngoài, mở giao diện, chờ lớp khởi động biến mất, chuyển tab và đổi theme; không có lỗi JavaScript. Đã xem ảnh màn hình chờ và giao diện để kiểm tra bố cục.
 - PyWebView/WebView2 thật với cửa sổ kiểm thử ẩn và dữ liệu tạm: màn hình chờ chuyển được tới giao diện, dữ liệu tải xong và cửa sổ đóng được.
-- PyInstaller đóng gói v2.0.1 thành công `dist/app-logo/TrichXuatHoaDon.exe`. Đã chạy trực tiếp bản đóng gói với dữ liệu tạm: API báo v2.0.1, tài nguyên HTML/CSS/JS/font trả HTTP 200 và workbook nằm trong thư mục cô lập. Chưa đo thời gian khởi động hoặc chạy kiểm thử toàn bộ thao tác giao diện trên file `.exe`.
+- PyInstaller đóng gói v2.0.2 thành công `dist/v2.0.2/TrichXuatHoaDon.exe`. Đã chạy trực tiếp bản đóng gói với dữ liệu tạm: API báo v2.0.2, tài nguyên HTML/CSS/JS/font trả HTTP 200 và workbook nằm trong thư mục cô lập. Bản `.exe` đã chạy trực tiếp UI hồi quy quét/lưu/ghi đè/upload/xóa preview/thư mục trống và đạt. Chưa đo thời gian khởi động hoặc kiểm thử toàn bộ các thao tác khác/mọi mẫu hóa đơn.
 
-Mở **`dist/app-logo/TrichXuatHoaDon.exe`** để dùng bản mới. ZIP mới: `dist/TrichXuatHoaDon-v2.0.1-Windows-app-logo.zip`. File `.exe` và ZIP v2.0.0 cũ ở thư mục gốc chưa được thay thế. Nếu workbook cũ không tự được chọn, chọn lại file đó trong Cài Đặt; không có bước chuyển dữ liệu tự động từ thư mục tạm của bản cũ.
+Mở **`dist/v2.0.2/TrichXuatHoaDon.exe`** để dùng bản mới. ZIP mới: `dist/TrichXuatHoaDon-v2.0.2-Windows.zip`. File `.exe` và ZIP v2.0.0 cũ ở thư mục gốc chưa được thay thế. Nếu workbook cũ không tự được chọn, chọn lại file đó trong Cài Đặt; không có bước chuyển dữ liệu tự động từ thư mục tạm của bản cũ.
 
 Màn hình chờ hiện từ lúc cửa sổ WebView được tạo. Bản `--onefile` vẫn cần giải nén trước thời điểm này; muốn có logo ngay trong giai đoạn giải nén cần bổ sung splash ở bootloader hoặc chuyển sang bản `onedir`.
 
