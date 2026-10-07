@@ -43,6 +43,9 @@ def start_application(window, server_state):
 
 
 def main():
+    if sys.platform == 'win32':
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('MinhTrietEras.TrichXuatHoaDon')
     import webview
 
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
@@ -70,7 +73,8 @@ def main():
 
     window.events.loaded += on_loaded
     window.events.closed += on_closed
-    webview.start()
+    root = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent))
+    webview.start(icon=str(root / 'static/images/app-icon.ico'))
 
 
 if __name__ == '__main__':

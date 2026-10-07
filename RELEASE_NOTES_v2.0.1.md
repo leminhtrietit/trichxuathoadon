@@ -2,6 +2,7 @@
 
 Ngày đóng gói: 07/10/2026.
 
+- Thêm logo app riêng và icon Windows đa kích thước; giữ logo tác giả ở dòng “powered by”.
 - Màn hình chờ chỉ có tên app lớn, phiên bản và “powered by” kèm logo; không có card hoặc nội dung phụ. Phiên bản lấy từ cấu hình chung cho cả Desktop và Web.
 - Tối ưu đọc tổng hợp Excel bằng streaming và cache theo thay đổi file.
 - Đóng gói CSS/icon cục bộ để giao diện dùng được offline.
@@ -11,7 +12,7 @@ Ngày đóng gói: 07/10/2026.
 
 ## Sử dụng
 
-Giải nén `TrichXuatHoaDon-v2.0.1-Windows.zip`, chạy `TrichXuatHoaDon.exe`. Bản Desktop dùng Windows và Microsoft Edge WebView2; không cần Python hoặc Node.js.
+Giải nén `TrichXuatHoaDon-v2.0.1-Windows-app-logo.zip`, chạy `TrichXuatHoaDon.exe`. Bản Desktop dùng Windows và Microsoft Edge WebView2; không cần Python hoặc Node.js.
 
 Nếu chưa thấy dữ liệu cũ, vào Cài Đặt chọn lại workbook đã sử dụng. Bản này không tự chuyển dữ liệu từ thư mục tạm của bản cũ.
 

@@ -23,7 +23,7 @@ Benchmark dùng workbook tổng hợp tự sinh, mỗi hóa đơn có 5 dòng h�
 | 1.000 / 5.000 | 2,716 giây | 0,722 giây | 0,055 giây |
 | 10.000 / 50.000 | 20,111 giây | 7,745 giây | 0,091 giây |
 
-Bản `.exe` cũ: 46.173.169 byte; bản v2.0.1 mới: 26.256.820 byte, giảm khoảng 43%. Dung lượng này phụ thuộc môi trường đóng gói.
+Bản `.exe` cũ: 46.173.169 byte; bản v2.0.1 có logo mới: 27.193.463 byte, giảm khoảng 41%. Dung lượng này phụ thuộc môi trường đóng gói.
 
 Chạy lại benchmark từ thư mục dự án: `python benchmarks/benchmark_summary.py`. Kết quả lưu ở `build/benchmark-results.json`.
 
@@ -51,9 +51,9 @@ Thứ tự đề xuất: sửa thuế XML và escape dữ liệu giao diện; b�
 - Kiểm tra cú pháp Python, JavaScript và `git diff --check` đạt.
 - Edge headless: chặn tài nguyên bên ngoài, mở giao diện, chờ lớp khởi động biến mất, chuyển tab và đổi theme; không có lỗi JavaScript. Đã xem ảnh màn hình chờ và giao diện để kiểm tra bố cục.
 - PyWebView/WebView2 thật với cửa sổ kiểm thử ẩn và dữ liệu tạm: màn hình chờ chuyển được tới giao diện, dữ liệu tải xong và cửa sổ đóng được.
-- PyInstaller đóng gói v2.0.1 thành công `dist/TrichXuatHoaDon.exe`. Đã chạy trực tiếp bản đóng gói với dữ liệu tạm: API báo v2.0.1, tài nguyên HTML/CSS/JS/font trả HTTP 200 và workbook nằm trong thư mục cô lập. Chưa đo thời gian khởi động hoặc chạy kiểm thử toàn bộ thao tác giao diện trên file `.exe`.
+- PyInstaller đóng gói v2.0.1 thành công `dist/app-logo/TrichXuatHoaDon.exe`. Đã chạy trực tiếp bản đóng gói với dữ liệu tạm: API báo v2.0.1, tài nguyên HTML/CSS/JS/font trả HTTP 200 và workbook nằm trong thư mục cô lập. Chưa đo thời gian khởi động hoặc chạy kiểm thử toàn bộ thao tác giao diện trên file `.exe`.
 
-Mở **`dist/TrichXuatHoaDon.exe`** để dùng bản mới. ZIP mới: `dist/TrichXuatHoaDon-v2.0.1-Windows.zip`. File `.exe` và ZIP v2.0.0 cũ ở thư mục gốc chưa được thay thế. Nếu workbook cũ không tự được chọn, chọn lại file đó trong Cài Đặt; không có bước chuyển dữ liệu tự động từ thư mục tạm của bản cũ.
+Mở **`dist/app-logo/TrichXuatHoaDon.exe`** để dùng bản mới. ZIP mới: `dist/TrichXuatHoaDon-v2.0.1-Windows-app-logo.zip`. File `.exe` và ZIP v2.0.0 cũ ở thư mục gốc chưa được thay thế. Nếu workbook cũ không tự được chọn, chọn lại file đó trong Cài Đặt; không có bước chuyển dữ liệu tự động từ thư mục tạm của bản cũ.
 
 Màn hình chờ hiện từ lúc cửa sổ WebView được tạo. Bản `--onefile` vẫn cần giải nén trước thời điểm này; muốn có logo ngay trong giai đoạn giải nén cần bổ sung splash ở bootloader hoặc chuyển sang bản `onedir`.
 

@@ -12,7 +12,7 @@ python -m PyInstaller ^
     --name "TrichXuatHoaDon" ^
     --onefile ^
     --noconsole ^
-    --icon "logo.ico" ^
+    --icon "static\images\app-icon.ico" ^
     --add-data "templates;templates" ^
     --add-data "static;static" ^
     --hidden-import "openpyxl" ^
@@ -26,7 +26,7 @@ python -m PyInstaller ^
     --exclude-module "matplotlib" ^
     --exclude-module "scipy" ^
     --clean ^
-    --distpath "dist" ^
+    --distpath "dist\app-logo" ^
     desktop_app.py
 
 if errorlevel 1 (
@@ -38,7 +38,7 @@ if errorlevel 1 (
 
 echo.
 echo ================================================================
-echo   [THÀNH CÔNG] ĐÃ TẠO FILE: dist\TrichXuatHoaDon.exe
+echo   [THÀNH CÔNG] ĐÃ TẠO FILE: dist\app-logo\TrichXuatHoaDon.exe
 echo   File chạy độc lập hoàn toàn, không cần cài đặt Python.
 echo ================================================================
 pause
