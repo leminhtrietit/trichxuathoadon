@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initClearDataModal();
         initInvoiceModal();
         initAboutModal();
+        initFeedback();
         initUpdateChecker();
         await loadOnboarding();
         await Promise.allSettled([loadAppStatus(), loadExcelData()]);
@@ -1988,7 +1989,6 @@ function initClearDataModal() {
 function initInvoiceModal() {
     const modal = document.getElementById('invoice-modal');
     const btnClose = document.getElementById('btn-close-modal');
-    const btnPrint = document.getElementById('btn-print-modal');
 
     if (btnClose) {
         btnClose.addEventListener('click', () => {
@@ -2013,11 +2013,6 @@ function initInvoiceModal() {
         }
     });
 
-    if (btnPrint) {
-        btnPrint.addEventListener('click', () => {
-            window.print();
-        });
-    }
 }
 
 function renderInvoiceExtraInfo(inv) {
@@ -2025,7 +2020,7 @@ function renderInvoiceExtraInfo(inv) {
     container.replaceChildren();
     const labels = {
         filename: 'File gốc', file_type: 'Định dạng', supplier_folder: 'Thư mục', thoi_gian_nhap: 'Thời gian lưu',
-        phien_ban: 'Phiên bản hóa đơn', ty_gia: 'Tỷ giá', mst_tcgp: 'MST tổ chức giải pháp', nguoi_ky: 'Người ký',
+        phien_ban: 'Phiên bản hóa đơn', ty_gia: 'Tỷ giá', mst_tcgp: 'MST tổ chức giải pháp',
         email: 'Email', sdt: 'Điện thoại', stk: 'Số tài khoản', ngan_hang: 'Ngân hàng',
         ma_cua_hang: 'Mã cửa hàng', ten_cua_hang: 'Tên cửa hàng', ho_ten_nguoi_mua: 'Họ tên người mua',
         thue_suat: 'Thuế suất', thanh_tien: 'Tiền chưa thuế', tien_thue: 'Tiền thuế'
@@ -2055,7 +2050,7 @@ function renderInvoiceExtraInfo(inv) {
         container.appendChild(box);
     }
     section('Nguồn hóa đơn', inv, ['filename', 'file_type', 'supplier_folder', 'thoi_gian_nhap']);
-    section('Thông tin bổ sung', inv.thong_tin_chung, ['phien_ban', 'ty_gia', 'mst_tcgp', 'nguoi_ky']);
+    section('Thông tin bổ sung', inv.thong_tin_chung, ['phien_ban', 'ty_gia', 'mst_tcgp']);
     section('Liên hệ bên bán', inv.nguoi_ban, ['email', 'stk', 'ngan_hang', 'ma_cua_hang', 'ten_cua_hang']);
     section('Liên hệ bên mua', inv.nguoi_mua, ['sdt', 'email', 'stk', 'ngan_hang', 'ho_ten_nguoi_mua']);
     (inv.thanh_toan.chi_tiet_thue || []).forEach((tax, index) => section(`Thuế suất ${index + 1}`, tax));
@@ -2115,7 +2110,6 @@ function showInvoiceModal(inv) {
     document.getElementById('modal-total-amount').textContent = formatCurrency(toan.tong_tien_thanh_toan);
     document.getElementById('modal-total-in-words').textContent = toan.tong_tien_chu || '---';
 
-    document.getElementById('modal-sign-date').textContent = tt.ngay_ky ? `Ngày ký: ${tt.ngay_ky.replace('T', ' ')}` : 'Chưa có thông tin chữ ký';
     renderInvoiceExtraInfo(inv);
 
     modal.classList.remove('hidden');
@@ -2685,4 +2679,44 @@ async function loadOnboarding() {
         document.getElementById('btn-onboarding-retry').classList.remove('hidden');
     }
     updateOnboardingButton();
+}
+
+// Không kết nối mạng khi mở/soạn góp ý; chỉ bật gửi sau khi tích hợp API thật.
+function initFeedback() {
+    const modal = document.getElementById('feedback-modal');
+    const open = document.getElementById('btn-open-feedback');
+    const message = document.getElementById('feedback-message');
+    const copy = document.getElementById('btn-copy-feedback');
+    const consent = document.getElementById('feedback-consent');
+    let previousFocus;
+    const close = () => {
+        modal.classList.add('hidden'); modal.classList.remove('flex');
+        consent.checked = false;
+        setAppInert(false);
+        previousFocus?.focus();
+    };
+    open.addEventListener('click', () => {
+        previousFocus = document.activeElement;
+        consent.checked = false;
+        modal.classList.remove('hidden'); modal.classList.add('flex');
+        setAppInert(true); message.focus();
+    });
+    document.getElementById('btn-close-feedback').addEventListener('click', close);
+    modal.addEventListener('click', event => {if (event.target === modal) close();});
+    document.addEventListener('keydown', event => {
+        if (modal.classList.contains('hidden')) return;
+        if (event.key === 'Escape') {event.preventDefault(); close();}
+        else trapDialogTab(event, modal);
+    });
+    message.addEventListener('input', () => {copy.disabled = !message.value.trim();});
+    copy.addEventListener('click', async () => {
+        const email = document.getElementById('feedback-email').value.trim();
+        try {
+            await navigator.clipboard.writeText(message.value.trim() + (email ? `\nEmail: ${email}` : ''));
+            document.getElementById('feedback-status').textContent = 'Đã sao chép bản nháp. Chưa gửi dữ liệu lên Internet.';
+        } catch (err) {
+            document.getElementById('feedback-status').textContent = 'Không thể sao chép tự động. Hãy chọn nội dung và nhấn Ctrl+C.';
+            message.focus(); message.select();
+        }
+    });
 }

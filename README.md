@@ -24,11 +24,15 @@
 
 Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng hợp theo nhà cung cấp và kỳ kê khai thuế, cùng bộ lọc trên giao diện ứng dụng.
 
-## Thực trạng dự án — v2.0.5, cập nhật 07/10/2026
+## Thực trạng dự án — v2.0.6, cập nhật 07/10/2026
 
 **Quy tắc dành cho các agent:** đọc mục này và [AGENTS.md](AGENTS.md) trước khi làm việc. Sau mỗi đợt thay đổi đáng kể, cập nhật README ngay trong cùng đợt làm việc: phần đã hoàn thành, lỗi còn tồn đọng, kết quả kiểm thử và bản đóng gói. README là nơi tra cứu thực trạng hiện tại; báo cáo chi tiết không thay thế việc cập nhật README.
 
 ### Đã hoàn thành
+
+- **v2.0.6 popup hóa đơn:** tiêu đề “Chi tiết hóa đơn”, bỏ nút in và phần chữ ký dưới cùng/trường Người ký trong bổ sung; giữ thông tin hóa đơn, sản phẩm và tiền thuế. Loại cả tham chiếu JS đến DOM chữ ký để không phát sinh lỗi null. Không sửa parser hoặc cơ chế ghi Excel.
+- **Góp ý:** dấu `?` phía trên Cài đặt mở hộp soạn nội dung/email tùy chọn và ô đồng ý gửi qua Internet. Dùng được khi sidebar thu gọn, giữ focus bàn phím, đóng bằng Escape, reset đồng ý mỗi lần mở. Có sao chép bản nháp; bản nháp chỉ ở bộ nhớ phiên, không ghi Excel/cấu hình. **Chưa gửi được:** chưa có API nhận được xác minh, nút Gửi luôn khóa và thông báo rõ. Mở/soạn góp ý không tạo request mạng; kiểm tra cập nhật vẫn có mạng như trước.
+- **Tích hợp website còn chờ:** chủ dự án chọn nhận qua trang quản trị `leminhtriet.com`. Cần mã nguồn/stack backend website để tạo API HTTPS, lưu DB và mục quản trị có đăng nhập; không cần SMTP. [Hướng dẫn tích hợp](docs/FEEDBACK_SETUP.md) có hợp đồng payload đề xuất và cách đồng ý từng lần; chưa triển khai website hoặc sender, chưa đổi điều khoản vì chưa có hành vi gửi mới. Chưa kiểm thử gửi thật hay quản trị website.
 
 - **v2.0.5 thuế từng dòng:** XML ưu tiên `TThue`/`VATAmount`/`TaxAmount` khai báo, kể cả 0/số âm; bỏ lỗi truthiness của Element ở tiền thuế. Phân biệt trường tiền thuế mở rộng `TTin` với thuế suất. Nếu thiếu số tiền thuế, tính từ thành tiền và thuế suất số (gồm thập phân dấu chấm/phẩy), làm tròn 2 chữ số bằng Decimal; hỗ trợ các ký hiệu KCT/KKKNT. Không có đủ dữ liệu thì để trống và UI hiển thị “Chưa xác định”, không giả định thuế bằng 0.
 - **PDF văn bản:** bỏ gán cứng 8%/thuế từng dòng 0. Tính khi đọc được thuế suất cuối dòng; dùng thuế suất chung chỉ khi tổng tiền hàng và tổng thuế đối chiếu khớp; một mặt hàng khớp toàn bộ tiền hàng có thể nhận tiền thuế tổng đã khai báo. Không tự phân bổ tổng thuế cho nhiều dòng thiếu thuế suất. Các thử nghiệm PDF mới dùng văn bản layout giả lập, chưa xác nhận mọi mẫu PDF thực tế.
@@ -44,7 +48,7 @@ Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng 
 
 
 - **v2.0.3 giao diện:** sidebar theo thứ tự **Trích xuất hóa đơn → Tổng quan → Danh sách hóa đơn → Chi tiết hóa đơn**; Cài đặt vẫn ở cuối. Phần “Giao diện” trong Cài đặt dùng 8 nút màu nhỏ, bỏ tiêu đề lớn, mô tả dài và mã màu.
-- **Xem hóa đơn chỉ đọc:** bấm dòng hóa đơn đã lưu (hoặc Enter/Space) để mở thông tin chung, bên bán/mua, sản phẩm, thuế, thanh toán và file nguồn. API GET `/api/invoice-details` đọc hai sheet bằng `read_only=True`, không khởi tạo/lưu Excel. Những trường workbook không lưu (điện thoại/email/chữ ký/tiền tệ...) không được suy đoán; dữ liệu vừa quét vẫn hiển thị các trường parser có. Bỏ nhãn chữ ký “hợp lệ” vì app không xác minh chữ ký số.
+- **Xem hóa đơn chỉ đọc:** bấm dòng hóa đơn đã lưu (hoặc Enter/Space) để mở thông tin chung, bên bán/mua, sản phẩm, thuế, thanh toán và file nguồn. API GET `/api/invoice-details` đọc hai sheet bằng `read_only=True`, không khởi tạo/lưu Excel. Những trường workbook không lưu (điện thoại/email/chữ ký/tiền tệ...) không được suy đoán; dữ liệu vừa quét hiển thị các trường parser có phù hợp với popup. v2.0.6 bỏ hoàn toàn phần chữ ký; app không xác minh chữ ký số.
 - **Chi tiết hóa đơn:** sản phẩm theo từng hóa đơn đã lưu và hóa đơn đang xem trước, gộp theo khóa hiện có để không hiện hai lần. Giữ số HĐ, ký hiệu, sản phẩm, ĐVT/số lượng và các khoản tiền/thuế; bỏ hai cột Người bán và Mã hàng chỉ trên giao diện. Cấu trúc và quy trình ghi 3 sheet Excel giữ nguyên.
 - Escape dữ liệu ở bảng hóa đơn đã lưu, bảng sản phẩm và dòng hàng hóa/mã CQT trong popup; các vùng frontend khác vẫn cần xử lý theo mục tồn đọng bên dưới.
 
@@ -59,7 +63,7 @@ Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng 
 - Đóng gói Tailwind CSS và Font Awesome tại máy, không tải CDN cho giao diện; dùng font hệ thống.
 - Bản `.exe` lưu cấu hình và workbook mặc định vào `%LOCALAPPDATA%\MinhTrietEras\TrichXuatHoaDon\data`; đường dẫn Excel riêng vẫn do người dùng chọn. Chạy từ mã nguồn dùng thư mục `data` của dự án.
 - Chặn ghi đè workbook hiện có nhưng không đọc được; thông báo lỗi đọc Excel trên giao diện. Quét thư mục chỉ đánh dấu đã lưu khi lưu thành công.
-- Loại thư viện tùy chọn không dùng khỏi bản đóng gói; bản mới nằm ở **`dist/v2.0.5/TrichXuatHoaDon.exe`**. ZIP mới: `dist/TrichXuatHoaDon-v2.0.5-Windows.zip`. Các file `.exe`/ZIP v2.0.0 đến v2.0.4 vẫn là bản cũ; mở đúng bản v2.0.5 để dùng bản sửa lỗi; chưa có bước chuyển dữ liệu tự động từ bản cũ.
+- Loại thư viện tùy chọn không dùng khỏi bản đóng gói; bản mới nằm ở **`dist/v2.0.6/TrichXuatHoaDon.exe`**. ZIP mới: `dist/TrichXuatHoaDon-v2.0.6-Windows.zip`. Các file `.exe`/ZIP v2.0.0 đến v2.0.5 vẫn là bản cũ; mở đúng bản v2.0.6 để dùng bản sửa lỗi; chưa có bước chuyển dữ liệu tự động từ bản cũ.
 
 ### Hiệu năng đã đo
 
@@ -70,7 +74,7 @@ Workbook tự sinh, mỗi hóa đơn có 5 dòng hàng hóa; mỗi cấu hình �
 | 1.000 / 5.000 | 2,716 giây | 0,722 giây | 0,055 giây |
 | 10.000 / 50.000 | 20,111 giây | 7,745 giây | 0,091 giây |
 
-Bản `.exe` cũ khoảng **46,2 MB**, bản v2.0.5 khoảng **27,2 MB**. Chạy lại số đo bằng `python benchmarks/benchmark_summary.py`; kết quả xuất vào `build/benchmark-results.json`. Script cố định mốc trước tối ưu ở commit `5c90279`, giữ nguyên mốc so sánh sau khi commit các thay đổi mới.
+Bản `.exe` cũ khoảng **46,2 MB**, bản v2.0.6 khoảng **27,2 MB**. Chạy lại số đo bằng `python benchmarks/benchmark_summary.py`; kết quả xuất vào `build/benchmark-results.json`. Script cố định mốc trước tối ưu ở commit `5c90279`, giữ nguyên mốc so sánh sau khi commit các thay đổi mới.
 
 ### Lỗi và giới hạn chưa sửa
 
@@ -92,6 +96,9 @@ Parser XML vẫn có vài nhánh `find(...) or ...` ngoài tiền thuế, bộ t
 Ưu tiên tiếp theo: escape các vùng giao diện còn lại, bảo vệ ghi Excel, giới hạn ZIP, rồi phân trang bảng và tiến độ quét. Xem bằng chứng chi tiết trong [PERFORMANCE_AUDIT.md](PERFORMANCE_AUDIT.md).
 
 ### Phạm vi đã kiểm thử và tình trạng bản đóng gói
+
+- **v2.0.6:** 23 test backend đạt. Cả 5 bộ UI (`onboarding_ui`, `scan_ui_regression`, `invoice_view_ui`, `line_tax_ui`, `feedback_ui`) đạt trên mã nguồn và bản `.exe` cuối với dữ liệu tạm: popup đúng tiêu đề, không nút in/DOM chữ ký, xem không đổi SHA-256 workbook; dấu ? nằm trên Cài đặt, dùng được khi thu gọn, đóng/khôi phục focus, reset đồng ý và không tạo request gửi góp ý. Kiểm tra màn hình chờ đúng v2.0.6 và logo nạp đầy đủ. Chưa có kiểm thử gửi thật vì chưa triển khai API.
+- **Bàn giao hiện tại:** `dist/v2.0.6/TrichXuatHoaDon.exe` (27.207.043 byte), `dist/TrichXuatHoaDon-v2.0.6-Windows.zip`; manifest có SHA-256 và commit nguồn. Xem [ghi chú v2.0.6](RELEASE_NOTES_v2.0.6.md), [ảnh hộp góp ý](docs/feedback-preview.png) và [tích hợp website](docs/FEEDBACK_SETUP.md). Mã nguồn bàn giao nhánh `main` trên origin; chưa xuất bản GitHub Release v2.0.6, binary/ZIP không đưa vào Git.
 
 - v2.0.5: 6 test thuế mới đạt, gồm các alias tiền thuế khai báo, 0/âm, trường mở rộng, 8%/10%/1,5%/KCT/KKKNT/thiếu dữ liệu, làm tròn và đọc Excel chỉ bù ô trống. PDF thử với layout text giả lập: thuế suất dòng, thuế suất chung đối chiếu khớp, một dòng với tổng thuế và nhiều dòng thiếu dữ liệu. Bộ UI `tests/line_tax_ui.cjs` dùng upload/lưu API thật trên workbook tạm, bấm cả 4 dòng hóa đơn để kiểm tra thuế khai báo/tính được/chưa xác định, không có khối sản phẩm phụ. Cả 4 bộ UI trên mã nguồn đã đạt; SHA-256 workbook giữ nguyên khi chỉ xem.
 

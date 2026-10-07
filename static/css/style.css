@@ -314,33 +314,6 @@ body, aside, header, main, .nav-tab, .bg-white, .rounded-3xl, .rounded-2xl {
     box-shadow: 0 10px 25px -5px var(--m3-primary-glow) !important;
 }
 
-/* Định dạng in bản thể hiện hóa đơn */
-@media print {
-    body * {
-        visibility: hidden;
-    }
-    #invoice-modal, #invoice-modal * {
-        visibility: visible;
-    }
-    #invoice-modal {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        background: transparent !important;
-        padding: 0 !important;
-    }
-    #invoice-modal .bg-gradient-to-r,
-    #btn-close-modal,
-    #btn-print-modal {
-        display: none !important;
-    }
-    #invoice-printable-area {
-        padding: 0 !important;
-        border: none !important;
-    }
-}
-
 /* Sidebar thu gọn giữ icon, nhãn trợ năng và nút mở rộng ở header. */
 #app-sidebar { transition:width .18s ease; }
 #app-sidebar.sidebar-collapsed { width:76px; }
@@ -356,3 +329,6 @@ body, aside, header, main, .nav-tab, .bg-white, .rounded-3xl, .rounded-2xl {
 .sidebar-collapsed .nav-tab > div > div { margin:0; }
 .sidebar-collapsed .nav-tab > div > span { margin:0; }
 @media(prefers-reduced-motion:reduce) { #app-sidebar { transition:none; } }
+
+.sidebar-collapsed .sidebar-feedback { padding:10px; justify-content:center; }
+.sidebar-collapsed .feedback-label { display:none; }
