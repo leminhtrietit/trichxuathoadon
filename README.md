@@ -38,14 +38,16 @@ Dữ liệu được lưu vào file Excel gồm **3 Sheet**, kèm bảng tổng 
 - **Tinh gọn Popup Góp Ý & Báo Lỗi:**
   + `templates/index.html` & `static/js/app.js`: Bỏ toàn bộ các dòng mô tả kỹ thuật rườm rà (thông tin website nhận, checkbox cho phép kết nối, mô tả độ dài ký tự). Thiết kế lại form tinh gọn, hiện đại chuẩn Material 3: Header gradient, vùng nhập nội dung, email liên hệ, nút Sao chép, Hủy và Gửi góp ý.
   + Biên dịch lại `static/css/tailwind.css`.
-- **Đặt tên file thực thi kèm phiên bản & Giữ nguyên tiêu đề app:**
+- **Đặt tên file thực thi kèm phiên bản & Nhúng Windows PE Metadata:**
   + Tiêu đề cửa sổ Desktop & thanh thương hiệu Windows giữ nguyên tên tiêu chuẩn: `Trích xuất hóa đơn - MinhTrietEras`.
-  + Tên file thực thi biên dịch đóng gói được đặt kèm phiên bản: `dist/v2.0.9/TrichXuatHoaDon-v2.0.9.exe` (26.706.911 bytes, SHA-256: `5b6e3a81f8938f4ac1b6ef149dfb6f9ee2a9d5ffcf809ed51261bbde2bc83cfd`).
-  + Gói phân phối ZIP: `dist/TrichXuatHoaDon-v2.0.9-Windows.zip` (26.149.838 bytes, SHA-256: `9bcdd510e7d99a8ad857912ae9752235461b4b48839b80839d6ade31db9390ff`).
+  + Tệp thực thi nhúng trực tiếp thông tin bản quyền Windows PE Metadata (`file_version_info.txt`): CompanyName `MinhTrietEras`, ProductName `Trích Xuất Hóa Đơn`, FileVersion `2.0.9.0`, Copyright `Copyright © 2026 Lê Minh Triết - MinhTrietEras`.
+  + Tên file thực thi biên dịch đóng gói: `dist/v2.0.9/TrichXuatHoaDon-v2.0.9.exe` (26.707.137 bytes, SHA-256: `97b98af075805268d757eda462f834f03bda32590442e77cca315e91dffa2e01`).
+  + Gói phân phối ZIP: `dist/TrichXuatHoaDon-v2.0.9-Windows.zip` (26.149.588 bytes, SHA-256: `27fc93857e030d24025b1c597704ecc08221b455041ac035cc7a739c4c5e77d9`).
   + File cấu hình kiểm tra tính toàn vẹn: `dist/v2.0.9/release-manifest.json` và `dist/v2.0.9/SHA256SUMS.txt`.
 - **Kiểm thử & Bản đóng gói:**
   + Đạt 29/29 bài test backend và toàn bộ luồng kiểm thử UI Edge headless (`tests/feedback_ui.cjs`).
-  + Đóng gói thành công `dist/v2.0.9/TrichXuatHoaDon-v2.0.9.exe` chạy độc lập, khởi động nhanh và giữ kích thước tối ưu (~26.7 MB).
+  + Đóng gói thành công `dist/v2.0.9/TrichXuatHoaDon-v2.0.9.exe` chạy độc lập, khởi động nhanh, tích hợp siêu dữ liệu bản quyền Windows PE đầy đủ.
+
 
 ### Đã hoàn thành trước đó (Lịch sử)
 

@@ -16,6 +16,7 @@ python -m PyInstaller ^
     --onefile ^
     --noconsole ^
     --icon "static\images\app-icon.ico" ^
+    --version-file "file_version_info.txt" ^
     --add-data "templates;templates" ^
     --add-data "static;static" ^
     --hidden-import "openpyxl" ^

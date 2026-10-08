@@ -12,9 +12,10 @@ Ngày: 07/10/2026.
 - **Tinh gọn Popup Góp Ý & Báo Lỗi:**
   + Loại bỏ toàn bộ các câu mô tả kỹ thuật rườm rà (thông tin máy chủ, checkbox kết nối Internet, cảnh báo độ dài ký tự).
   + Giao diện form chuẩn Material Design 3 gồm trường nội dung góp ý, email liên hệ, nút Sao chép, Hủy và Gửi góp ý.
-- **Đặt tên file thực thi kèm phiên bản & Giữ nguyên tiêu đề app:**
+- **Đặt tên file thực thi kèm phiên bản & Nhúng Windows PE Metadata:**
   + Tiêu đề cửa sổ Desktop & giao diện Windows giữ nguyên tên tiêu chuẩn: `Trích xuất hóa đơn - MinhTrietEras`.
-  + Tên file thực thi biên dịch đóng gói được đặt kèm phiên bản: `dist/v2.0.9/TrichXuatHoaDon-v2.0.9.exe` (26.706.911 bytes, SHA-256: `5b6e3a81f8938f4ac1b6ef149dfb6f9ee2a9d5ffcf809ed51261bbde2bc83cfd`).
-  + Gói phân phối ZIP: `dist/TrichXuatHoaDon-v2.0.9-Windows.zip` (26.149.838 bytes, SHA-256: `9bcdd510e7d99a8ad857912ae9752235461b4b48839b80839d6ade31db9390ff`).
+  + Tệp thực thi nhúng trực tiếp thông tin bản quyền Windows PE Metadata (`file_version_info.txt`): CompanyName `MinhTrietEras`, ProductName `Trích Xuất Hóa Đơn`, FileVersion `2.0.9.0`, Copyright `Copyright © 2026 Lê Minh Triết - MinhTrietEras`.
+  + Tên file thực thi biên dịch đóng gói: `dist/v2.0.9/TrichXuatHoaDon-v2.0.9.exe` (26.707.137 bytes, SHA-256: `97b98af075805268d757eda462f834f03bda32590442e77cca315e91dffa2e01`).
+  + Gói phân phối ZIP: `dist/TrichXuatHoaDon-v2.0.9-Windows.zip` (26.149.588 bytes, SHA-256: `27fc93857e030d24025b1c597704ecc08221b455041ac035cc7a739c4c5e77d9`).
 - **Kiểm thử:** 29/29 bài test backend và kiểm thử giao diện thực tế Playwright trên Edge headless đạt 100%.
 
